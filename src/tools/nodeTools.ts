@@ -118,33 +118,33 @@ export class NodeTools {
   }
 
   async handleToolCall(request: CallToolRequest): Promise<any> {
-    const { name, arguments: args } = request.params;
+    const { name, arguments: args = {} } = request.params;
 
     try {
       switch (name) {
         case 'discover_nodes':
-          return await this.discoverNodes(args.forceRefresh);
+          return await this.discoverNodes(Boolean(args.forceRefresh));
 
         case 'get_node_info':
-          return await this.getNodeInfo(args.nodeName);
+          return await this.getNodeInfo(String(args.nodeName || ''));
 
         case 'search_nodes':
-          return await this.searchNodes(args.query);
+          return await this.searchNodes(String(args.query || ''));
 
         case 'get_nodes_by_category':
-          return await this.getNodesByCategory(args.category);
+          return await this.getNodesByCategory(args.category ? String(args.category) : undefined);
 
         case 'get_community_nodes':
           return await this.getCommunityNodes();
 
         case 'get_node_documentation':
-          return await this.getNodeDocumentation(args.nodeName);
+          return await this.getNodeDocumentation(String(args.nodeName || ''));
 
         case 'get_discovery_stats':
           return await this.getDiscoveryStats();
 
         case 'validate_node_config':
-          return await this.validateNodeConfig(args.nodeName, args.config);
+          return await this.validateNodeConfig(String(args.nodeName || ''), args.config || {});
 
         default:
           throw new Error(`Unknown tool: ${name}`);
@@ -152,7 +152,7 @@ export class NodeTools {
     } catch (error: any) {
       return {
         error: true,
-        message: error.message || 'Unknown error occurred',
+        message: error?.message || 'Unknown error occurred',
         tool: name,
       };
     }
@@ -225,8 +225,8 @@ export class NodeTools {
     return {
       categories: Object.keys(nodesByCategory).map(cat => ({
         name: cat,
-        nodeCount: nodesByCategory[cat].length,
-        nodes: nodesByCategory[cat].slice(0, 5), // Preview first 5 nodes
+        nodeCount: nodesByCategory[cat]!.length,
+        nodes: nodesByCategory[cat]!.slice(0, 5), // Preview first 5 nodes
       })),
       totalCategories: Object.keys(nodesByCategory).length,
     };
@@ -243,7 +243,7 @@ export class NodeTools {
       if (!byPackage[packageName]) {
         byPackage[packageName] = [];
       }
-      byPackage[packageName].push({
+      byPackage[packageName]!.push({
         name: node.name,
         displayName: node.displayName,
         description: node.description,
@@ -261,8 +261,8 @@ export class NodeTools {
       })),
       packages: Object.keys(byPackage).map(pkg => ({
         name: pkg,
-        nodeCount: byPackage[pkg].length,
-        nodes: byPackage[pkg],
+        nodeCount: byPackage[pkg]!.length,
+        nodes: byPackage[pkg]!,
       })),
       total: communityNodes.length,
     };

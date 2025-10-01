@@ -210,7 +210,7 @@ export class WorkflowTools {
   }
 
   async handleToolCall(request: CallToolRequest): Promise<any> {
-    const { name, arguments: args } = request.params;
+    const { name, arguments: args = {} } = request.params;
 
     try {
       switch (name) {
@@ -218,31 +218,31 @@ export class WorkflowTools {
           return await this.listWorkflows();
 
         case 'get_workflow':
-          return await this.getWorkflow(args.id);
+          return await this.getWorkflow(String(args.id || ''));
 
         case 'execute_workflow':
-          return await this.executeWorkflow(args.id, args.data);
+          return await this.executeWorkflow(String(args.id || ''), String(args.data || ''));
 
         case 'get_execution':
-          return await this.getExecution(args.id);
+          return await this.getExecution(String(args.id || ''));
 
         case 'get_executions':
-          return await this.getExecutions(args.workflowId, args.limit);
+          return await this.getExecutions(args.workflowId ? String(args.workflowId) : undefined, args.limit ? Number(args.limit) : undefined);
 
         case 'activate_workflow':
-          return await this.activateWorkflow(args.id);
+          return await this.activateWorkflow(String(args.id || ''));
 
         case 'deactivate_workflow':
-          return await this.deactivateWorkflow(args.id);
+          return await this.deactivateWorkflow(String(args.id || ''));
 
         case 'create_workflow':
-          return await this.createWorkflow(args);
+          return await this.createWorkflow(args || {});
 
         case 'update_workflow':
-          return await this.updateWorkflow(args);
+          return await this.updateWorkflow(args || {});
 
         case 'delete_workflow':
-          return await this.deleteWorkflow(args.id);
+          return await this.deleteWorkflow(String(args.id || ''));
 
         default:
           throw new Error(`Unknown tool: ${name}`);

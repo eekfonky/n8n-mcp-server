@@ -9,19 +9,32 @@
     "dev": "tsx src/index.ts",
     "start": "node dist/index.js",
     "clean": "rm -rf dist",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "format": "prettier --write src/**/*.ts",
+    "typecheck": "tsc --noEmit",
     "docker:build": "docker build -t n8n-mcp-server .",
     "docker:run": "docker run --env-file .env n8n-mcp-server"
   },
   "keywords": ["mcp", "n8n", "workflow", "automation", "ai"],
-  "author": "Your Name",
+  "author": "",
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
     "axios": "^1.6.0",
-    "dotenv": "^16.3.0"
+    "dotenv": "^16.3.0",
+    "express": "^4.18.0",
+    "cors": "^2.8.5",
+    "zod": "^3.22.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
+    "@types/express": "^4.17.0",
+    "@types/cors": "^2.8.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.45.0",
+    "prettier": "^3.0.0",
     "tsx": "^4.0.0",
     "typescript": "^5.0.0"
   },

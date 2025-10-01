@@ -206,7 +206,7 @@ export class WorkflowResources {
           statistics: stats,
           categories: Object.keys(categories).map(cat => ({
             name: cat,
-            nodeCount: categories[cat].length,
+            nodeCount: categories[cat]!.length,
             uri: `n8n://nodes/category/${encodeURIComponent(cat)}`,
           })),
           communityNodes: this.nodeDiscovery.getCommunityNodes().map(node => ({

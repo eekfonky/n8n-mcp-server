@@ -12,7 +12,7 @@ export interface DiscoveredNode {
   parameters: NodeParameter[];
   credentials: string[];
   isCustom: boolean;
-  packageName?: string;
+  packageName?: string | undefined;
 }
 
 export interface NodeParameter {
@@ -20,9 +20,9 @@ export interface NodeParameter {
   displayName: string;
   type: string;
   required: boolean;
-  description?: string;
+  description?: string | undefined;
   default?: any;
-  options?: Array<{ name: string; value: any; description?: string }>;
+  options?: Array<{ name: string; value: any; description?: string | undefined }> | undefined;
 }
 
 export class NodeDiscoveryService {
@@ -72,19 +72,19 @@ export class NodeDiscoveryService {
       parameters: this.extractParameters(nodeType.properties || []),
       credentials: this.extractCredentials(nodeType),
       isCustom: this.isCustomNode(nodeType.name),
-      packageName: this.extractPackageName(nodeType.name),
+      packageName: this.extractPackageName(nodeType.name) || undefined,
     };
   }
 
   private determineCategory(nodeType: N8nNodeType): string {
     // Use codex categories if available
     if (nodeType.codex?.categories?.length) {
-      return nodeType.codex.categories[0];
+      return nodeType.codex.categories[0]!;
     }
 
     // Use group information
     if (nodeType.group?.length) {
-      return nodeType.group[0];
+      return nodeType.group[0]!;
     }
 
     // Fallback to analyzing node name
@@ -107,9 +107,9 @@ export class NodeDiscoveryService {
       displayName: prop.displayName,
       type: prop.type,
       required: prop.required || false,
-      description: prop.description,
+      description: prop.description || undefined,
       default: prop.default,
-      options: prop.options,
+      options: prop.options || undefined,
     }));
   }
 
@@ -146,7 +146,7 @@ export class NodeDiscoveryService {
       if (!categories[node.category]) {
         categories[node.category] = [];
       }
-      categories[node.category].push(node);
+      categories[node.category]!.push(node);
     }
     
     return categories;
