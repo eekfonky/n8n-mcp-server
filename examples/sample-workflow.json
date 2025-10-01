@@ -1,0 +1,80 @@
+{
+  "name": "Sample Data Processing Workflow",
+  "nodes": [
+    {
+      "id": "webhook",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "position": [250, 300],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sample-data",
+        "responseMode": "responseNode"
+      }
+    },
+    {
+      "id": "transform",
+      "name": "Transform Data",
+      "type": "n8n-nodes-base.set",
+      "position": [450, 300],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "processedAt",
+              "value": "={{ new Date().toISOString() }}"
+            },
+            {
+              "name": "status",
+              "value": "processed"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "response",
+      "name": "Send Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "position": [650, 300],
+      "parameters": {
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseHeaders": {
+            "headers": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "connections": {
+    "webhook": {
+      "main": [
+        [
+          {
+            "node": "transform",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "transform": {
+      "main": [
+        [
+          {
+            "node": "response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "tags": ["sample", "webhook", "api"]
+}

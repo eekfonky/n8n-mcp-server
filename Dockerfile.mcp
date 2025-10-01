@@ -1,0 +1,28 @@
+# Ephemeral MCP Docker container - optimized for fast startup
+FROM node:18-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files and install production dependencies only
+COPY package*.json ./
+RUN npm ci --only=production --no-optional && \
+    npm cache clean --force && \
+    rm -rf /tmp/* /var/cache/apk/*
+
+# Copy pre-built application
+COPY dist/ ./dist/
+
+# Create non-root user for security
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S mcp -u 1001 && \
+    chown -R mcp:nodejs /app
+
+USER mcp
+
+# Environment variables for optimal MCP performance
+ENV NODE_ENV=production
+ENV NODE_OPTIONS="--max-old-space-size=128"
+
+# Direct entrypoint for MCP stdio protocol
+ENTRYPOINT ["node", "dist/index.js"]

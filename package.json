@@ -1,0 +1,31 @@
+{
+  "name": "n8n-mcp-server",
+  "version": "1.0.0",
+  "description": "Model Context Protocol server for n8n workflow automation",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "start": "node dist/index.js",
+    "clean": "rm -rf dist",
+    "docker:build": "docker build -t n8n-mcp-server .",
+    "docker:run": "docker run --env-file .env n8n-mcp-server"
+  },
+  "keywords": ["mcp", "n8n", "workflow", "automation", "ai"],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "axios": "^1.6.0",
+    "dotenv": "^16.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

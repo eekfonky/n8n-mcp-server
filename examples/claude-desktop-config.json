@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "n8n": {
+      "command": "docker",
+      "args": [
+        "exec",
+        "n8n-mcp-server",
+        "node",
+        "dist/index.js"
+      ],
+      "env": {
+        "N8N_BASE_URL": "http://localhost:5678",
+        "N8N_API_KEY": "your-api-key-here"
+      }
+    }
+  }
+}

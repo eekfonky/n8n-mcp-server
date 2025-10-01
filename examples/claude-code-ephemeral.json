@@ -1,0 +1,22 @@
+{
+  "name": "n8n",
+  "description": "n8n workflow automation MCP server (ephemeral Docker)",
+  "command": "docker",
+  "args": [
+    "run",
+    "--rm",
+    "-i",
+    "--network", "host",
+    "-e", "N8N_BASE_URL",
+    "-e", "N8N_API_KEY",
+    "-e", "MCP_SERVER_NAME=n8n-mcp-server",
+    "-e", "LOG_LEVEL=info",
+    "-e", "DEBUG=false",
+    "n8n-mcp-server:latest"
+  ],
+  "env": {
+    "N8N_BASE_URL": "http://localhost:5678",
+    "N8N_API_KEY": "your-api-key-here"
+  },
+  "transport": "stdio"
+}
