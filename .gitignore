@@ -40,8 +40,7 @@ build/
 ehthumbs.db
 Thumbs.db
 
-# Docker
-.dockerignore
+# Docker (removed .dockerignore from ignore to track it)
 
 # Logs
 logs
@@ -96,3 +95,18 @@ jspm_packages/
 
 # TernJS port file
 .tern-port
+
+# Claude Code specific files
+.claude/
+CLAUDE.md
+
+# Testing files (keep source but ignore outputs)
+coverage/
+*.lcov
+.nyc_output
+jest-results.json
+
+# Temporary and cache files
+tmp/
+temp/
+.cache/
