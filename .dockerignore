@@ -57,9 +57,9 @@ docker-stack.yml
 .claude/
 CLAUDE.md
 
-# Source files (since we copy pre-built dist/)
-src/
-tsconfig.json
+# Source files are needed for building in multi-stage Dockerfile
+# src/ - needed for build
+# tsconfig.json - needed for build
 
 # Testing files
 test/
