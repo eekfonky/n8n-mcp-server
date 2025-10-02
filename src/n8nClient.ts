@@ -17,7 +17,7 @@ export class N8nApiClient {
 
   constructor(private config: N8nConfig) {
     this.client = axios.create({
-      baseURL: config.baseUrl,
+      baseURL: `${config.baseUrl}/api/v1`,
       timeout: config.timeout || 30000,
       headers: {
         'X-N8N-API-KEY': config.apiKey,
@@ -98,7 +98,8 @@ export class N8nApiClient {
 
   async healthCheck(): Promise<boolean> {
     try {
-      await this.client.get('/healthz');
+      // Health endpoint is at root level, not under /api/v1
+      await this.client.get('../healthz');
       return true;
     } catch {
       return false;
@@ -162,12 +163,38 @@ export class N8nApiClient {
     const cached = this.getCached<N8nNodeType[]>(cacheKey);
     if (cached) return cached;
 
-    const response = await this.client.get('/node-types');
-    const nodeTypes = response.data.data || response.data;
-    
-    // Cache for longer since node types change less frequently
-    this.setCache(cacheKey, nodeTypes, this.cacheTtl * 4);
-    return nodeTypes;
+    try {
+      // Try different endpoints and methods for node types
+      let response;
+
+      try {
+        response = await this.client.get('/node-types');
+      } catch (getError) {
+        try {
+          response = await this.client.put('/node-types', {});
+        } catch (putError) {
+          try {
+            response = await this.client.post('/node-types', {});
+          } catch (postError) {
+            // If no node types endpoint works, return empty array
+            console.warn('Node types endpoint not available, returning empty array');
+            return [];
+          }
+        }
+      }
+
+      const nodeTypes = response.data.data || response.data;
+
+      // Ensure we return an array
+      const nodeTypesArray = Array.isArray(nodeTypes) ? nodeTypes : [];
+
+      // Cache for longer since node types change less frequently
+      this.setCache(cacheKey, nodeTypesArray, this.cacheTtl * 4);
+      return nodeTypesArray;
+    } catch (error: any) {
+      console.warn('Failed to fetch node types:', error?.message || 'Unknown error');
+      return [];
+    }
   }
 
   async getCredentials(): Promise<N8nCredential[]> {

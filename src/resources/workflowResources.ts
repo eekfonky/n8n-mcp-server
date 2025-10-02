@@ -1,11 +1,11 @@
 import { ListResourcesRequest, ReadResourceRequest, Resource } from '@modelcontextprotocol/sdk/types.js';
 import { N8nApiClient } from '../n8nClient.js';
-import { NodeDiscoveryService } from '../nodeDiscovery.js';
+import { EnhancedNodeDiscovery } from '../discovery/EnhancedNodeDiscovery.js';
 
 export class WorkflowResources {
   constructor(
     private n8nClient: N8nApiClient,
-    private nodeDiscovery: NodeDiscoveryService
+    private nodeDiscovery: EnhancedNodeDiscovery
   ) {}
 
   async listResources(request: ListResourcesRequest): Promise<Resource[]> {
@@ -53,7 +53,7 @@ export class WorkflowResources {
 
     // Add node category resources
     try {
-      await this.nodeDiscovery.discoverNodes();
+      const discoveryResult = await this.nodeDiscovery.discoverNodes();
       const categories = this.nodeDiscovery.getNodesByCategory();
       for (const category of Object.keys(categories)) {
         resources.push({
@@ -139,17 +139,18 @@ export class WorkflowResources {
     }
 
     // Enhance nodes with type information
-    const nodeTypes = await this.nodeDiscovery.discoverNodes();
+    const discoveryResult = await this.nodeDiscovery.discoverNodes();
+    const allNodes = [...discoveryResult.catalog.coreNodes, ...discoveryResult.catalog.communityNodes];
     const enhancedNodes = workflow.nodes?.map(node => {
-      const nodeType = nodeTypes.find(nt => nt.name === node.type);
+      const nodeType = allNodes.find((nt: any) => nt.name === node.type);
       return {
         ...node,
         typeInfo: nodeType ? {
           displayName: nodeType.displayName,
           description: nodeType.description,
           category: nodeType.category,
-          isCustom: nodeType.isCustom,
-          version: nodeType.version,
+          isCustom: !nodeType.isCore,
+          version: nodeType.typeVersion,
         } : { displayName: node.type, description: 'Unknown node type' },
       };
     });
@@ -183,8 +184,8 @@ export class WorkflowResources {
   }
 
   private async readNodesResource() {
-    const nodes = await this.nodeDiscovery.discoverNodes();
-    const stats = this.nodeDiscovery.getDiscoveryStats();
+    const discoveryResult = await this.nodeDiscovery.discoverNodes();
+    const stats = this.nodeDiscovery.getStatistics();
     const categories = this.nodeDiscovery.getNodesByCategory();
     
     return {
@@ -192,7 +193,7 @@ export class WorkflowResources {
         uri: 'n8n://nodes',
         mimeType: 'application/json',
         text: JSON.stringify({
-          nodes: nodes.map(node => ({
+          nodes: [...discoveryResult.catalog.coreNodes, ...discoveryResult.catalog.communityNodes].map((node: any) => ({
             name: node.name,
             displayName: node.displayName,
             description: node.description,
@@ -206,10 +207,10 @@ export class WorkflowResources {
           statistics: stats,
           categories: Object.keys(categories).map(cat => ({
             name: cat,
-            nodeCount: categories[cat]!.length,
+            nodeCount: (categories as any)[cat]?.length || 0,
             uri: `n8n://nodes/category/${encodeURIComponent(cat)}`,
           })),
-          communityNodes: this.nodeDiscovery.getCommunityNodes().map(node => ({
+          communityNodes: this.nodeDiscovery.getCommunityNodes().map((node: any) => ({
             name: node.name,
             displayName: node.displayName,
             packageName: node.packageName,
@@ -223,9 +224,9 @@ export class WorkflowResources {
 
   private async readNodeCategoryResource(uri: string) {
     const category = decodeURIComponent(uri.replace('n8n://nodes/category/', ''));
-    await this.nodeDiscovery.discoverNodes();
+    const discoveryResult = await this.nodeDiscovery.discoverNodes();
     const categories = this.nodeDiscovery.getNodesByCategory();
-    const categoryNodes = categories[category] || [];
+    const categoryNodes = (categories as any)[category] || [];
     
     return {
       contents: [{
@@ -233,14 +234,14 @@ export class WorkflowResources {
         mimeType: 'application/json',
         text: JSON.stringify({
           category,
-          nodes: categoryNodes.map(node => ({
+          nodes: categoryNodes.map((node: any) => ({
             name: node.name,
             displayName: node.displayName,
             description: node.description,
             version: node.version,
             isCustom: node.isCustom,
             packageName: node.packageName,
-            parameters: node.parameters.map(p => ({
+            parameters: node.parameters.map((p: any) => ({
               name: p.name,
               displayName: p.displayName,
               type: p.type,
@@ -320,17 +321,17 @@ export class WorkflowResources {
       const [workflows, executions, nodeStats] = await Promise.all([
         this.n8nClient.getWorkflows(),
         this.n8nClient.getExecutions(undefined, 100),
-        this.nodeDiscovery.getDiscoveryStats(),
+        this.nodeDiscovery.getStatistics(),
       ]);
 
       const connectionStatus = await this.n8nClient.validateConnection();
       
       // Calculate execution statistics
       const now = Date.now();
-      const last24h = executions.filter(exec => 
+      const last24h = executions.filter((exec: any) =>
         new Date(exec.startedAt).getTime() > now - (24 * 60 * 60 * 1000)
       );
-      const last7d = executions.filter(exec => 
+      const last7d = executions.filter((exec: any) =>
         new Date(exec.startedAt).getTime() > now - (7 * 24 * 60 * 60 * 1000)
       );
 
@@ -345,26 +346,25 @@ export class WorkflowResources {
             },
             workflows: {
               total: workflows.length,
-              active: workflows.filter(wf => wf.active).length,
-              inactive: workflows.filter(wf => !wf.active).length,
-              withTags: workflows.filter(wf => wf.tags && wf.tags.length > 0).length,
+              active: workflows.filter((wf: any) => wf.active).length,
+              inactive: workflows.filter((wf: any) => !wf.active).length,
+              withTags: workflows.filter((wf: any) => wf.tags && wf.tags.length > 0).length,
             },
             executions: {
               total: executions.length,
-              completed: executions.filter(exec => exec.finished).length,
-              running: executions.filter(exec => !exec.finished).length,
+              completed: executions.filter((exec: any) => exec.finished).length,
+              running: executions.filter((exec: any) => !exec.finished).length,
               last24h: last24h.length,
               last7d: last7d.length,
             },
             nodes: {
-              total: nodeStats.total,
-              core: nodeStats.coreNodes,
-              community: nodeStats.communityNodes,
-              categories: nodeStats.categories.length,
+              total: nodeStats.totalDiscovered,
+              uniqueTypes: nodeStats.uniqueTypes,
+              mostUsedNode: nodeStats.mostUsedNode,
+              categories: nodeStats.categoriesFound,
             },
             performance: {
               cacheStats: this.n8nClient.getCacheStats(),
-              discoveryLastRun: nodeStats.lastDiscovery,
             },
             lastUpdated: new Date().toISOString(),
           }, null, 2),

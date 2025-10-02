@@ -8,32 +8,26 @@ import type {
   ReadResourceRequest,
 } from '@modelcontextprotocol/sdk/types.js';
 import { IMCPRequestHandler, ValidationResult } from '../interfaces/index.js';
-import { WorkflowTools } from '../tools/workflowTools.js';
-import { NodeTools } from '../tools/nodeTools.js';
 import { WorkflowResources } from '../resources/workflowResources.js';
 import { InternalError } from '../errors/MCPError.js';
 
 export class MCPRequestHandler implements IMCPRequestHandler {
-  private workflowTools: WorkflowTools;
-  private nodeTools: NodeTools;
+  private primitiveTools: Array<{ getTool(): any; handleToolCall(request: any): Promise<any> }>;
   private workflowResources: WorkflowResources;
 
   constructor(
-    workflowTools: WorkflowTools,
-    nodeTools: NodeTools,
+    primitiveTools: Array<{ getTool(): any; handleToolCall(request: any): Promise<any> }>,
     workflowResources: WorkflowResources
   ) {
-    this.workflowTools = workflowTools;
-    this.nodeTools = nodeTools;
+    this.primitiveTools = primitiveTools;
     this.workflowResources = workflowResources;
   }
 
   async handleToolsRequest(request: Record<string, unknown>): Promise<{ tools: any[] }> {
-    const workflowTools = this.workflowTools.getTools();
-    const nodeTools = this.nodeTools.getTools();
+    const tools = this.primitiveTools.map(tool => tool.getTool());
 
     return {
-      tools: [...workflowTools, ...nodeTools],
+      tools,
     };
   }
 
@@ -45,21 +39,15 @@ export class MCPRequestHandler implements IMCPRequestHandler {
   async handleToolCall(request: CallToolRequest): Promise<{ content: any[] }> {
     const toolName = request.params.name;
 
-    // Route to appropriate tool handler
-    const workflowToolNames = this.workflowTools.getTools().map(t => t.name);
-    const nodeToolNames = this.nodeTools.getTools().map(t => t.name);
+    // Find the appropriate primitive tool
+    const tool = this.primitiveTools.find(t => t.getTool().name === toolName);
 
-    if (workflowToolNames.includes(toolName)) {
-      const result = await this.workflowTools.handleToolCall(request);
-      return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+    if (!tool) {
+      throw new Error(`Unknown tool: ${toolName}`);
     }
 
-    if (nodeToolNames.includes(toolName)) {
-      const result = await this.nodeTools.handleToolCall(request);
-      return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
-    }
-
-    throw new Error(`Unknown tool: ${toolName}`);
+    const result = await tool.handleToolCall(request);
+    return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
   }
 
   async handleResourceRead(request: ReadResourceRequest): Promise<any> {

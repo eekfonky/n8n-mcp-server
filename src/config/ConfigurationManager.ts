@@ -200,9 +200,16 @@ export class ConfigurationManager implements IConfigurationManager {
         return null;
       }
 
-      if (fs.existsSync(secretFile)) {
-        const content = fs.readFileSync(secretFile, 'utf8').trim();
-        return content || null;
+      // Use statSync for existence check (more efficient than existsSync + readFileSync)
+      try {
+        const stats = fs.statSync(secretFile);
+        if (stats.isFile()) {
+          const content = fs.readFileSync(secretFile, 'utf8');
+          return content.trim() || null;
+        }
+      } catch (statError) {
+        // File doesn't exist or isn't readable
+        return null;
       }
     } catch (error) {
       console.error(`Failed to read Docker secret ${secretName}:`, error);

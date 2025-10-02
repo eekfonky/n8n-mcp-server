@@ -16,13 +16,12 @@ import {
   IMCPServer,
 } from '../interfaces/index.js';
 import { N8nApiClient } from '../n8nClient.js';
-import { NodeDiscoveryService } from '../nodeDiscovery.js';
+import { EnhancedNodeDiscovery } from '../discovery/EnhancedNodeDiscovery.js';
 import { TransportManager } from '../transport/TransportManager.js';
 import { HealthCheckService } from '../health/HealthCheckService.js';
-import { MCPRequestHandler } from '../handlers/MCPRequestHandler.js';
-import { WorkflowTools } from '../tools/workflowTools.js';
-import { NodeTools } from '../tools/nodeTools.js';
 import { WorkflowResources } from '../resources/workflowResources.js';
+import { MCPRequestHandler } from '../handlers/MCPRequestHandler.js';
+import * as PrimitiveTools from '../tools/primitives/index.js';
 
 export class ServiceFactory {
   createApiClient(config: ServerConfig): N8nApiClient {
@@ -33,8 +32,8 @@ export class ServiceFactory {
     });
   }
 
-  createNodeDiscovery(apiClient: N8nApiClient): NodeDiscoveryService {
-    return new NodeDiscoveryService(apiClient);
+  createNodeDiscovery(apiClient: N8nApiClient): EnhancedNodeDiscovery {
+    return new EnhancedNodeDiscovery(apiClient);
   }
 
   createCacheService(config: ServerConfig): ICacheService {
@@ -54,23 +53,50 @@ export class ServiceFactory {
     return new TransportManager(server, dependencies);
   }
 
-  createRequestHandler(dependencies: { apiClient: N8nApiClient; nodeDiscovery: NodeDiscoveryService }): MCPRequestHandler {
-    const workflowTools = new WorkflowTools(
-      dependencies.apiClient,
-      dependencies.nodeDiscovery
-    );
+  createRequestHandler(dependencies: { apiClient: N8nApiClient; nodeDiscovery: EnhancedNodeDiscovery }): MCPRequestHandler {
+    // Create primitive tools - some need nodeDiscovery, some don't
+    const discoverTool = new PrimitiveTools.N8nDiscoverTool(dependencies.apiClient, dependencies.nodeDiscovery);
+    const createTool = new PrimitiveTools.N8nCreateTool(dependencies.apiClient, dependencies.nodeDiscovery);
+    const executeTool = new PrimitiveTools.N8nExecuteTool(dependencies.apiClient);
+    const inspectTool = new PrimitiveTools.N8nInspectTool(dependencies.apiClient, dependencies.nodeDiscovery);
+    const removeTool = new PrimitiveTools.N8nRemoveTool(dependencies.apiClient);
+    const modifyTool = new PrimitiveTools.N8nModifyTool(dependencies.apiClient, dependencies.nodeDiscovery);
+    const connectTool = new PrimitiveTools.N8nConnectTool(dependencies.apiClient);
+    const controlTool = new PrimitiveTools.N8nControlTool(dependencies.apiClient);
+    const searchTool = new PrimitiveTools.N8nSearchTool(dependencies.apiClient, dependencies.nodeDiscovery);
+    const validateTool = new PrimitiveTools.N8nValidateTool(dependencies.apiClient, dependencies.nodeDiscovery);
 
-    const nodeTools = new NodeTools(
-      dependencies.apiClient,
-      dependencies.nodeDiscovery
-    );
+    // Advanced primitive tools (Phase 3)
+    const monitorTool = new PrimitiveTools.N8nMonitorTool(dependencies.apiClient);
+    const debugTool = new PrimitiveTools.N8nDebugTool(dependencies.apiClient, dependencies.nodeDiscovery);
+    const templateTool = new PrimitiveTools.N8nTemplateTool(dependencies.apiClient, dependencies.nodeDiscovery);
+    const batchTool = new PrimitiveTools.N8nBatchTool(dependencies.apiClient, dependencies.nodeDiscovery);
+    const exportTool = new PrimitiveTools.N8nExportTool(dependencies.apiClient, dependencies.nodeDiscovery);
+
+    const primitiveTools = [
+      discoverTool,
+      createTool,
+      executeTool,
+      inspectTool,
+      removeTool,
+      modifyTool,
+      connectTool,
+      controlTool,
+      searchTool,
+      validateTool,
+      monitorTool,
+      debugTool,
+      templateTool,
+      batchTool,
+      exportTool
+    ];
 
     const workflowResources = new WorkflowResources(
       dependencies.apiClient,
       dependencies.nodeDiscovery
     );
 
-    return new MCPRequestHandler(workflowTools, nodeTools, workflowResources);
+    return new MCPRequestHandler(primitiveTools, workflowResources);
   }
 }
 
