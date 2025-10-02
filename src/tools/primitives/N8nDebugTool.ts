@@ -2,6 +2,7 @@ import { CallToolRequest, Tool } from '@modelcontextprotocol/sdk/types.js';
 import { N8nApiClient } from '../../n8nClient.js';
 import { DebugParams, DebugTarget, DebugOptions, ToolResponse, WorkflowAnalysis, AnalysisIssue } from '../../types/primitiveTypes.js';
 import { EnhancedNodeDiscovery } from '../../discovery/EnhancedNodeDiscovery.js';
+import { extractParameters } from '../../utils/parameterExtraction.js';
 
 export class N8nDebugTool {
   constructor(
@@ -53,7 +54,8 @@ export class N8nDebugTool {
   }
 
   async handleToolCall(request: CallToolRequest): Promise<ToolResponse> {
-    const params = request.params as unknown as DebugParams;
+    const args = extractParameters(request);
+    const params = args as unknown as DebugParams;
     const { action, target, options = {} } = params;
     const { includeCredentials = false, includeData = false, depth = 'shallow', format = 'summary' } = options;
 

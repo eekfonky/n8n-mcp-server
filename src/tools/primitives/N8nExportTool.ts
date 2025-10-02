@@ -3,6 +3,7 @@ import { N8nApiClient } from '../../n8nClient.js';
 import { ExportParams, ExportResult, ToolResponse } from '../../types/primitiveTypes.js';
 import { deepClone, DataTransformer, ArrayOptimizer } from '../../utils/performance.js';
 import { EnhancedNodeDiscovery } from '../../discovery/EnhancedNodeDiscovery.js';
+import { extractParameters } from '../../utils/parameterExtraction.js';
 
 export class N8nExportTool {
   constructor(
@@ -72,7 +73,8 @@ export class N8nExportTool {
   }
 
   async handleToolCall(request: CallToolRequest): Promise<ToolResponse> {
-    const params = request.params as unknown as ExportParams;
+    const args = extractParameters(request);
+    const params = args as unknown as ExportParams;
     const { action, target, format = 'json', filters, options = {} } = params;
 
     try {

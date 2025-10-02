@@ -1,13 +1,27 @@
+# Docker Compose for n8n MCP Server
+# ⚠️  NOTE: This is for local development only!
+#
+# For production use, prefer the Docker MCP Toolkit approach:
+# 1. ./scripts/setup-docker-mcp.sh
+# 2. docker mcp gateway run
+#
+# This compose file runs a persistent container, which contradicts
+# the ephemeral pattern recommended for MCP servers.
+
 services:
   n8n-mcp-server:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: n8n-mcp-server
+    image: eekfonky/n8n-mcp-server:latest
+    container_name: n8n-mcp-server-dev
     environment:
       - N8N_BASE_URL=${N8N_BASE_URL}
       - N8N_API_KEY=${N8N_API_KEY}
       - LOG_LEVEL=${LOG_LEVEL:-info}
       - RATE_LIMIT_REQUESTS_PER_MINUTE=${RATE_LIMIT_REQUESTS_PER_MINUTE:-60}
       - CACHE_TTL_SECONDS=${CACHE_TTL_SECONDS:-300}
+      - DEBUG=${DEBUG:-false}
     restart: unless-stopped
+    stdin_open: true  # Required for MCP stdio transport
+    tty: true

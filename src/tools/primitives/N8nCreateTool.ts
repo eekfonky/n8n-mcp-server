@@ -1,7 +1,9 @@
 import { CallToolRequest, Tool } from '@modelcontextprotocol/sdk/types.js';
 import { N8nApiClient } from '../../n8nClient.js';
+import { extractParameters } from '../../utils/parameterExtraction.js';
 import { EnhancedNodeDiscovery } from '../../discovery/EnhancedNodeDiscovery.js';
 import { N8nWorkflow, N8nNode } from '../../types.js';
+import { randomUUID } from 'crypto';
 
 export class N8nCreateTool {
   constructor(
@@ -64,7 +66,8 @@ export class N8nCreateTool {
   }
 
   async handleToolCall(request: CallToolRequest): Promise<any> {
-    const { type, ...params } = request.params as any;
+    const args = extractParameters(request);
+    const { type, ...params } = args;
 
     try {
       switch (type) {
@@ -160,8 +163,8 @@ export class N8nCreateTool {
       throw new Error(`Node type ${nodeType} not found`);
     }
 
-    // Generate unique node ID
-    const nodeId = `node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    // Generate unique node ID using crypto.randomUUID for better security
+    const nodeId = `node-${randomUUID()}`;
 
     // Calculate position (offset if placing after another node)
     let nodePosition = position;

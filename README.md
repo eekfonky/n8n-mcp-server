@@ -17,75 +17,114 @@ A production-ready Model Context Protocol (MCP) server that provides AI models w
 
 ## 📋 Prerequisites
 
-- **Node.js** 18+
-- **Docker** (for containerized deployment)
+- **Docker Desktop** with MCP Toolkit
 - **n8n instance** with API access enabled
 - **n8n API Key** with appropriate permissions
 
 ## 🛠️ Installation & Setup
 
-### Method 1: Ephemeral Docker MCP (Recommended)
+### Method 1: Docker MCP Toolkit (Recommended) ⭐
 
-This follows the proper Docker MCP pattern where containers spin up per request and shut down immediately after.
+The easiest way to install using Docker Desktop's built-in MCP Toolkit:
 
 ```bash
-# Clone and setup
-git clone <repository-url>
-cd n8n-mcp-server
+# One-command setup
+curl -sSL https://raw.githubusercontent.com/eekfonky/n8n-mcp-server/main/scripts/setup-docker-mcp.sh | bash
+```
 
-# Auto-setup with ephemeral containers
-./scripts/setup-ephemeral-mcp.sh
+Or clone and run locally:
+
+```bash
+git clone https://github.com/eekfonky/n8n-mcp-server.git
+cd n8n-mcp-server
+./scripts/setup-docker-mcp.sh
 ```
 
 This will:
-- Prompt for your n8n URL and API key
-- Build the Docker image
-- Configure Claude Code MCP integration
-- Test the connection
+- Enable Docker MCP features
+- Create the n8n MCP catalog
+- Add n8n server to the catalog
+- Configure your n8n connection
+- Test the integration
 
-### Method 2: Manual Ephemeral Setup
-
+**Daily Usage:**
 ```bash
-# Build the project and Docker image
-npm install
-npm run build
-./scripts/build-mcp-image.sh
+# Start the MCP gateway
+docker mcp gateway run
 
-# Copy and configure the Claude Code MCP config
-cp examples/claude-code-ephemeral.json ~/.config/claude-code/mcp/n8n-server.json
-# Edit the config file with your n8n URL and API key
+# Test n8n tools
+docker mcp tools list | grep n8n_
+docker mcp tools call n8n_discover type=health
 ```
 
-### Method 3: Persistent Service (Development)
+### Method 2: Manual Docker MCP Setup
 
 ```bash
+# Create catalog and add n8n server
+docker mcp catalog create n8n-mcp-catalog
+docker mcp catalog add n8n-mcp-catalog n8n-server https://raw.githubusercontent.com/eekfonky/n8n-mcp-server/main/catalog/server-definition.yaml
+
+# Configure secrets
+docker mcp secret set n8n-server.base_url "https://your-n8n-instance.com"
+docker mcp secret set n8n-server.api_key "your-api-key"
+
+# Enable dynamic tools feature and run
+docker mcp feature enable dynamic-tools
+docker mcp gateway run
+```
+
+### Method 3: Local Development
+
+For local development and testing:
+
+```bash
+# Clone the repository
+git clone https://github.com/eekfonky/n8n-mcp-server.git
+cd n8n-mcp-server
+
+# Install dependencies
+npm install
+
 # Copy environment configuration
 cp .env.example .env
 # Edit .env with your n8n configuration
 
-# Build and run
-npm install && npm run build
-npm start  # Or docker-compose up -d for persistent Docker
+# Build and run locally
+npm run build
+npm start
 ```
 
 ## ⚙️ Configuration
 
-### Environment Variables
+### Docker MCP Secrets
+
+The Docker MCP Toolkit manages configuration through secrets:
 
 ```bash
-# n8n Instance Configuration
-N8N_BASE_URL=http://localhost:5678    # Your n8n instance URL
-N8N_API_KEY=your_api_key_here        # n8n API key
+# Required secrets
+docker mcp secret set n8n-server.base_url "https://your-n8n-instance.com"
+docker mcp secret set n8n-server.api_key "your-api-key"
 
-# MCP Server Configuration
-MCP_SERVER_NAME=n8n-mcp-server       # Server identifier
-MCP_SERVER_VERSION=1.0.0             # Server version
+# View configured secrets
+docker mcp secret list
+```
 
-# Optional: Performance & Debugging
-LOG_LEVEL=info                        # Logging level
-DEBUG=false                           # Debug mode
-RATE_LIMIT_REQUESTS_PER_MINUTE=60    # Rate limiting
-CACHE_TTL_SECONDS=300                 # Cache duration
+### Optional Configuration
+
+Configure performance and behavior:
+
+```bash
+# Set custom log level (error, warn, info, debug)
+docker mcp config set n8n-server.log_level "info"
+
+# Set rate limiting (requests per minute)
+docker mcp config set n8n-server.rate_limit "60"
+
+# Set cache TTL (seconds)
+docker mcp config set n8n-server.cache_ttl "300"
+
+# Enable debug mode
+docker mcp config set n8n-server.debug "false"
 ```
 
 ### Getting n8n API Key
@@ -203,44 +242,64 @@ Claude Code: [Uses n8n_debug, n8n_inspect for detailed analysis]
 
 ## 🐳 Docker Deployment Options
 
-### Ephemeral (Recommended)
+### Docker MCP Toolkit (Recommended)
+
+The Docker MCP Toolkit provides ephemeral container execution automatically:
 
 ```bash
-# Build the ephemeral image
-./scripts/build-mcp-image.sh
+# Build and publish image (for development)
+./scripts/build-and-publish.sh --build-only
 
-# Claude Code will automatically use:
+# Or use published image
+docker pull eekfonky/n8n-mcp-server:latest
+
+# The Docker MCP gateway handles container lifecycle automatically
+docker mcp gateway run
+```
+
+### Local Development
+
+```bash
+# Build for local testing
+docker build -t eekfonky/n8n-mcp-server:latest .
+
+# Test manually
 docker run --rm -i \
   -e N8N_BASE_URL=http://localhost:5678 \
   -e N8N_API_KEY=your-key \
-  --network host \
-  n8n-mcp-server:latest
+  eekfonky/n8n-mcp-server:latest
 ```
 
-### Persistent Service (Development)
+## 🔌 AI Integration
 
-```bash
-# Long-running service
-docker-compose up -d n8n-mcp-server
+### Docker MCP Toolkit Integration
 
-# Or production mode
-docker-compose -f docker-compose.prod.yml up -d
-```
+The Docker MCP Toolkit automatically handles server discovery and execution:
 
-## 🔌 Claude Code Integration
+1. **Setup once using the installation methods above**
+2. **Start the gateway**: `docker mcp gateway run`
+3. **AI tools automatically discover n8n capabilities**
 
-### Ephemeral Configuration
+No additional configuration needed - the Docker MCP Toolkit handles:
+- ✅ Ephemeral container execution per request
+- ✅ Secret management for n8n API credentials
+- ✅ Tool discovery and routing
+- ✅ Container lifecycle and cleanup
+
+### Claude Code Integration (Alternative)
+
+For direct Claude Code integration without Docker MCP Toolkit:
 
 ```json
 {
   "name": "n8n",
-  "description": "n8n workflow automation MCP server (ephemeral)",
+  "description": "n8n workflow automation MCP server",
   "command": "docker",
   "args": [
-    "run", "--rm", "-i", "--network", "host",
+    "run", "--rm", "-i",
     "-e", "N8N_BASE_URL=http://localhost:5678",
     "-e", "N8N_API_KEY=your-api-key-here",
-    "n8n-mcp-server:latest"
+    "eekfonky/n8n-mcp-server:latest"
   ],
   "transport": "stdio"
 }
@@ -250,15 +309,23 @@ docker-compose -f docker-compose.prod.yml up -d
 
 ```
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Claude Code   │────│  Docker Container│────│   n8n Instance  │
-│                 │    │  (ephemeral)     │    │                 │
+│    AI Client    │────│  Docker MCP      │────│   n8n Instance  │
+│  (Claude, etc.) │    │    Gateway       │    │                 │
 └─────────────────┘    └──────────────────┘    └─────────────────┘
                                │
                        ┌──────────────────┐
-                       │  15 Primitive    │
-                       │      Tools       │
+                       │ Ephemeral n8n    │
+                       │ MCP Containers   │
+                       │ (15 Tools)       │
                        └──────────────────┘
 ```
+
+**Docker MCP Toolkit Benefits:**
+- 🚀 **Ephemeral Execution**: Containers spin up per request, shut down immediately
+- 🔒 **Security Isolation**: Each request runs in a fresh, isolated environment
+- 📦 **Automatic Discovery**: Tools are automatically available to AI clients
+- ⚡ **Performance**: Fast startup (< 3 seconds) with optimized Alpine images
+- 🔧 **Zero Configuration**: Works out-of-the-box after catalog setup
 
 ### Enterprise-Grade Quality
 
@@ -277,7 +344,7 @@ docker-compose -f docker-compose.prod.yml up -d
 watch "docker ps -a | grep n8n-mcp-server"
 
 # View recent container logs
-docker logs $(docker ps -a -q --filter ancestor=n8n-mcp-server:latest | head -1)
+docker logs $(docker ps -a -q --filter ancestor=eekfonky/n8n-mcp-server:latest | head -1)
 ```
 
 ### Health Checks
@@ -286,24 +353,47 @@ docker logs $(docker ps -a -q --filter ancestor=n8n-mcp-server:latest | head -1)
 # Check n8n connectivity
 curl -H "X-N8N-API-KEY: your-key" http://localhost:5678/api/v1/workflows
 
+# Test Docker MCP integration
+./scripts/test-docker-mcp.sh
+
 # Rebuild image if needed
-./scripts/build-mcp-image.sh
+./scripts/build-and-publish.sh --build-only
 ```
 
 ## 🆘 Troubleshooting
 
 ### Common Issues
 
-**Ephemeral Container Fails**
+**Docker MCP Integration Issues**
 ```bash
+# Check catalog status
+docker mcp catalog ls
+docker mcp catalog show n8n-mcp-catalog
+
 # Check image exists
 docker images | grep n8n-mcp-server
 
 # Rebuild if needed
-./scripts/build-mcp-image.sh
+./scripts/build-and-publish.sh --build-only
 
-# Test manually with debug
-docker run --rm -it -e DEBUG=true -e N8N_BASE_URL=http://localhost:5678 -e N8N_API_KEY=your-key n8n-mcp-server:latest
+# Test the setup
+./scripts/test-docker-mcp.sh
+
+# Test image manually
+docker run --rm -it -e DEBUG=true -e N8N_BASE_URL=http://localhost:5678 -e N8N_API_KEY=your-key eekfonky/n8n-mcp-server:latest
+```
+
+**Tools Not Visible**
+```bash
+# Check gateway status
+pgrep -f "docker mcp gateway"
+
+# Restart gateway
+pkill -f "docker mcp gateway"
+docker mcp gateway run
+
+# Check tools after restart
+docker mcp tools list | grep n8n_
 ```
 
 **Connection Issues**
@@ -332,8 +422,11 @@ npm run typecheck
 ### Rebuilding
 
 ```bash
-# Rebuild everything
-./scripts/build-mcp-image.sh
+# Build and publish Docker image
+./scripts/build-and-publish.sh
+
+# Or just build locally
+./scripts/build-and-publish.sh --build-only
 
 # Or just rebuild TypeScript
 npm run build
@@ -352,10 +445,27 @@ Check the `examples/` directory for:
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature/amazing-feature`
 3. Make your changes
-4. Test with both ephemeral and persistent modes
+4. Test with Docker MCP Toolkit and local development
 5. Commit: `git commit -m 'Add amazing feature'`
 6. Push: `git push origin feature/amazing-feature`
 7. Open a Pull Request
+
+### GitHub Actions Setup
+
+For automated Docker image publishing, maintainers need these GitHub repository secrets:
+
+```bash
+# Required secrets in GitHub repository settings:
+DOCKERHUB_USERNAME  # Your Docker Hub username
+DOCKERHUB_TOKEN     # Docker Hub access token (not password)
+
+# GITHUB_TOKEN is automatically provided by GitHub Actions
+```
+
+**Setting up Docker Hub token:**
+1. Go to [Docker Hub Account Settings](https://hub.docker.com/settings/security)
+2. Create a new access token with Read & Write permissions
+3. Add `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` to your GitHub repository secrets
 
 ## 📝 License
 

@@ -3,6 +3,7 @@ import { N8nApiClient } from '../../n8nClient.js';
 import { BatchParams, BatchResult, ToolResponse } from '../../types/primitiveTypes.js';
 import { deepClone, ConcurrencyController, ArrayOptimizer } from '../../utils/performance.js';
 import { EnhancedNodeDiscovery } from '../../discovery/EnhancedNodeDiscovery.js';
+import { extractParameters } from '../../utils/parameterExtraction.js';
 
 export class N8nBatchTool {
   private concurrencyController: ConcurrencyController;
@@ -66,7 +67,8 @@ export class N8nBatchTool {
   }
 
   async handleToolCall(request: CallToolRequest): Promise<ToolResponse> {
-    const params = request.params as unknown as BatchParams;
+    const args = extractParameters(request);
+    const params = args as unknown as BatchParams;
     const { action, target, operation, items, options = {} } = params;
     const targets = items || [];
     const data = operation?.data || {};

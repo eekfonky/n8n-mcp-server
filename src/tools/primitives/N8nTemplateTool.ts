@@ -4,6 +4,7 @@ import { TemplateParams, TemplateDefinition, TemplateVariable, TemplateMetadata,
 import { deepClone, DataTransformer } from '../../utils/performance.js';
 import { EnhancedNodeDiscovery } from '../../discovery/EnhancedNodeDiscovery.js';
 import { N8nWorkflow } from '../../types.js';
+import { extractParameters } from '../../utils/parameterExtraction.js';
 
 export class N8nTemplateTool {
   constructor(
@@ -69,7 +70,8 @@ export class N8nTemplateTool {
   }
 
   async handleToolCall(request: CallToolRequest): Promise<ToolResponse> {
-    const params = request.params as unknown as TemplateParams;
+    const args = extractParameters(request);
+    const params = args as unknown as TemplateParams;
     const { action, template, workflowId, variables, filters, sortBy = 'name', limit = 20 } = params;
 
     try {

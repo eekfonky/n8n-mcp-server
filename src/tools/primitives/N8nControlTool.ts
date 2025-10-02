@@ -1,6 +1,7 @@
 import { CallToolRequest, Tool } from '@modelcontextprotocol/sdk/types.js';
 import { N8nApiClient } from '../../n8nClient.js';
 import { N8nWorkflow } from '../../types.js';
+import { extractParameters } from '../../utils/parameterExtraction.js';
 
 export class N8nControlTool {
   constructor(private n8nClient: N8nApiClient) {}
@@ -43,7 +44,8 @@ export class N8nControlTool {
   }
 
   async handleToolCall(request: CallToolRequest): Promise<any> {
-    const { action, workflow, workflows, force = false, validateFirst = true } = request.params as any;
+    const args = extractParameters(request);
+    const { action, workflow, workflows, force = false, validateFirst = true } = args;
 
     try {
       switch (action) {

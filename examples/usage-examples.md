@@ -8,7 +8,7 @@ This file contains practical examples of how to use the n8n MCP Server with AI m
 ```
 You: "Show me all my n8n workflows"
 
-Claude will use: list_workflows tool
+Claude will use: n8n_discover type=workflows
 Response: JSON list of all workflows with basic info (name, status, tags, etc.)
 ```
 
@@ -16,7 +16,7 @@ Response: JSON list of all workflows with basic info (name, status, tags, etc.)
 ```
 You: "Tell me about the 'Data Processing' workflow"
 
-Claude will use: get_workflow tool with workflow name/ID
+Claude will use: n8n_inspect with workflow details
 Response: Complete workflow definition including nodes, connections, and metadata
 ```
 
@@ -24,7 +24,7 @@ Response: Complete workflow definition including nodes, connections, and metadat
 ```
 You: "Run the customer onboarding workflow"
 
-Claude will use: execute_workflow tool
+Claude will use: n8n_execute tool
 Response: Execution ID and status
 ```
 
@@ -35,8 +35,8 @@ Response: Execution ID and status
 You: "Create a workflow that processes incoming webhooks and sends emails"
 
 Claude will:
-1. Use discover_nodes to find relevant nodes
-2. Use create_workflow to build the workflow
+1. Use n8n_discover type=nodes to find relevant nodes
+2. Use n8n_create to build the workflow
 3. Return the new workflow ID and configuration
 ```
 
@@ -44,7 +44,7 @@ Claude will:
 ```
 You: "Execute the data processing workflow with this customer data: {name: 'John', email: 'john@example.com'}"
 
-Claude will use: execute_workflow with the provided data
+Claude will use: n8n_execute with the provided data
 ```
 
 ## Node Discovery and Management
@@ -53,7 +53,7 @@ Claude will use: execute_workflow with the provided data
 ```
 You: "What nodes do I have for sending emails?"
 
-Claude will use: search_nodes with query "email"
+Claude will use: n8n_search with query "email"
 Response: List of email-related nodes with descriptions
 ```
 
@@ -61,7 +61,7 @@ Response: List of email-related nodes with descriptions
 ```
 You: "What community nodes are installed in my n8n instance?"
 
-Claude will use: get_community_nodes
+Claude will use: n8n_discover type=nodes
 Response: List of all community/custom nodes with package information
 ```
 
@@ -69,7 +69,7 @@ Response: List of all community/custom nodes with package information
 ```
 You: "Show me all communication nodes"
 
-Claude will use: get_nodes_by_category with category "Communication"
+Claude will use: n8n_discover type=nodes category="Communication"
 Response: All nodes in the communication category
 ```
 
@@ -79,7 +79,7 @@ Response: All nodes in the communication category
 ```
 You: "What's the status of execution 12345?"
 
-Claude will use: get_execution with execution ID
+Claude will use: n8n_inspect for execution details
 Response: Detailed execution information including duration and status
 ```
 
@@ -87,7 +87,7 @@ Response: Detailed execution information including duration and status
 ```
 You: "Show me the last 10 workflow executions"
 
-Claude will use: get_executions with limit 10
+Claude will use: n8n_discover type=executions limit=10
 Response: List of recent executions across all workflows
 ```
 
@@ -95,7 +95,7 @@ Response: List of recent executions across all workflows
 ```
 You: "Show me executions for the customer onboarding workflow"
 
-Claude will use: get_executions filtered by workflow
+Claude will use: n8n_discover type=executions workflowId=<id>
 Response: Executions for that specific workflow
 ```
 
@@ -105,7 +105,7 @@ Response: Executions for that specific workflow
 ```
 You: "Give me stats about my n8n instance"
 
-Claude will access: n8n://stats resource
+Claude will use: n8n_discover type=stats
 Response: Comprehensive statistics including workflow counts, node counts, etc.
 ```
 
@@ -113,7 +113,7 @@ Response: Comprehensive statistics including workflow counts, node counts, etc.
 ```
 You: "Tell me about all available nodes"
 
-Claude will access: n8n://nodes resource  
+Claude will use: n8n_discover type=nodes  
 Response: Complete node catalog with categories and descriptions
 ```
 
@@ -124,9 +124,9 @@ Response: Complete node catalog with categories and descriptions
 You: "Analyze my 'Lead Processing' workflow and suggest improvements"
 
 Claude will:
-1. Use get_workflow to get workflow details
+1. Use n8n_inspect to get workflow details
 2. Analyze node usage and connections
-3. Use discover_nodes to find alternative/better nodes
+3. Use n8n_discover type=nodes to find alternative/better nodes
 4. Provide recommendations
 ```
 
@@ -227,7 +227,7 @@ Claude will:
 ```
 You: "Validate the configuration of my Slack node"
 
-Claude will use: validate_node_config
+Claude will use: n8n_validate
 Response: Validation results with specific errors/warnings
 ```
 

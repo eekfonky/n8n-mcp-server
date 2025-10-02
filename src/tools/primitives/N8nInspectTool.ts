@@ -1,6 +1,7 @@
 import { CallToolRequest, Tool } from '@modelcontextprotocol/sdk/types.js';
 import { N8nApiClient } from '../../n8nClient.js';
 import { EnhancedNodeDiscovery } from '../../discovery/EnhancedNodeDiscovery.js';
+import { extractParameters } from '../../utils/parameterExtraction.js';
 
 export class N8nInspectTool {
   constructor(
@@ -50,7 +51,8 @@ export class N8nInspectTool {
   }
 
   async handleToolCall(request: CallToolRequest): Promise<any> {
-    const { type, id, name, nodeType, detail = 'basic', includeData = false } = request.params as any;
+    const args = extractParameters(request);
+    const { type, id, name, nodeType, detail = 'basic', includeData = false } = args;
 
     try {
       switch (type) {

@@ -1,6 +1,7 @@
 import { CallToolRequest, Tool } from '@modelcontextprotocol/sdk/types.js';
 import { N8nApiClient } from '../../n8nClient.js';
 import { EnhancedNodeDiscovery } from '../../discovery/EnhancedNodeDiscovery.js';
+import { extractTypedParameters } from '../../utils/parameterExtraction.js';
 
 export class N8nDiscoverTool {
   constructor(
@@ -45,7 +46,14 @@ export class N8nDiscoverTool {
   }
 
   async handleToolCall(request: CallToolRequest): Promise<any> {
-    const { type, category, limit = 50, forceRefresh = false, workflowId } = request.params as any;
+    // Extract and convert parameters for both Docker MCP and standard MCP compatibility
+    const { type, category, limit, forceRefresh, workflowId } = extractTypedParameters(request, {
+      type: { type: 'string' },
+      category: { type: 'string' },
+      limit: { type: 'number', default: 50 },
+      forceRefresh: { type: 'boolean', default: false },
+      workflowId: { type: 'string' }
+    });
 
     try {
       switch (type) {

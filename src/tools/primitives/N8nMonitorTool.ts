@@ -2,6 +2,7 @@ import { CallToolRequest, Tool } from '@modelcontextprotocol/sdk/types.js';
 import { N8nApiClient } from '../../n8nClient.js';
 import { MonitorParams, ToolResponse, ExecutionLog, SystemHealth } from '../../types/primitiveTypes.js';
 import { ErrorHandler, Validator, N8nApiError, ValidationError, TimeoutError } from '../../types/errors.js';
+import { extractParameters } from '../../utils/parameterExtraction.js';
 
 export class N8nMonitorTool {
   constructor(private n8nClient: N8nApiClient) {}
@@ -57,7 +58,8 @@ export class N8nMonitorTool {
 
   async handleToolCall(request: CallToolRequest): Promise<ToolResponse> {
     try {
-      const params = request.params as unknown as MonitorParams;
+      const args = extractParameters(request);
+      const params = args as unknown as MonitorParams;
 
       // Input validation
       Validator.validateRequired(params.action, 'action');

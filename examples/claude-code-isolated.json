@@ -11,7 +11,7 @@
     "-e", "MCP_SERVER_NAME=n8n-mcp-server",
     "-e", "LOG_LEVEL=info",
     "-e", "DEBUG=false",
-    "n8n-mcp-server:latest"
+    "eekfonky/n8n-mcp-server:latest"
   ],
   "env": {
     "N8N_BASE_URL": "https://your-n8n-instance.com",

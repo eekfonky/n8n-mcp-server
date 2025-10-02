@@ -17,8 +17,8 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:primitives": "node dist/testing/final-test.js",
-    "docker:build": "docker build -t n8n-mcp-server .",
-    "docker:run": "docker run --env-file .env n8n-mcp-server"
+    "docker:build": "docker build -t eekfonky/n8n-mcp-server:latest .",
+    "docker:run": "docker run --rm -i --env-file .env eekfonky/n8n-mcp-server:latest"
   },
   "keywords": ["mcp", "n8n", "workflow", "automation", "ai"],
   "author": "",
