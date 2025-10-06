@@ -135,7 +135,7 @@ export class WorkflowResources {
     try {
       recentExecutions = await this.n8nClient.getExecutions(workflowId, 5);
     } catch (error) {
-      console.warn('Failed to load recent executions:', error);
+      console.error('[Resources] Failed to load recent executions:', error);
     }
 
     // Enhance nodes with type information

@@ -224,7 +224,22 @@ export class N8nInspectTool {
     }
 
     if (includeData && execution.data) {
-      result.data = execution.data;
+      // Warn about potentially large execution data
+      const dataStr = JSON.stringify(execution.data);
+      const dataSizeMB = Buffer.byteLength(dataStr, 'utf8') / (1024 * 1024);
+
+      if (dataSizeMB > 5) {
+        result.warning = `Execution data is large (${dataSizeMB.toFixed(2)}MB). Consider using includeData=false for better performance.`;
+        result.dataSummary = {
+          sizeMB: parseFloat(dataSizeMB.toFixed(2)),
+          hasError: execution.data?.resultData && 'error' in execution.data.resultData,
+          nodeCount: execution.data?.resultData?.runData ? Object.keys(execution.data.resultData.runData).length : 0
+        };
+        // Don't include full data for very large responses
+        console.error(`[Inspect] Warning: Large execution data (${dataSizeMB.toFixed(2)}MB) requested for execution ${executionId}`);
+      } else {
+        result.data = execution.data;
+      }
     }
 
     // Workflow info is already in workflowData

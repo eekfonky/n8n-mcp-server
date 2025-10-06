@@ -14,6 +14,7 @@ export class N8nApiClient {
   private cache = new Map<string, CacheEntry<any>>();
   private rateLimiter: RateLimiter;
   private readonly cacheTtl: number;
+  private readonly maxCacheSize: number;
 
   constructor(private config: N8nConfig) {
     this.client = axios.create({
@@ -30,10 +31,11 @@ export class N8nApiClient {
       requests: 0,
       windowStart: Date.now(),
       windowSize: 60000, // 1 minute
-      maxRequests: parseInt(process.env.RATE_LIMIT_REQUESTS_PER_MINUTE || '60'),
+      maxRequests: parseInt(process.env.RATE_LIMIT_REQUESTS_PER_MINUTE || '60', 10),
     };
 
-    this.cacheTtl = parseInt(process.env.CACHE_TTL_SECONDS || '300') * 1000;
+    this.cacheTtl = parseInt(process.env.CACHE_TTL_SECONDS || '300', 10) * 1000;
+    this.maxCacheSize = parseInt(process.env.MAX_CACHE_SIZE || '100', 10);
 
     // Request interceptor for rate limiting
     this.client.interceptors.request.use((config) => {
@@ -89,6 +91,14 @@ export class N8nApiClient {
   }
 
   private setCache<T>(key: string, data: T, ttl?: number): void {
+    // Implement LRU eviction: if cache is full, remove oldest entry
+    if (this.cache.size >= this.maxCacheSize && !this.cache.has(key)) {
+      const oldestKey = this.cache.keys().next().value;
+      if (oldestKey) {
+        this.cache.delete(oldestKey);
+      }
+    }
+
     this.cache.set(key, {
       data,
       timestamp: Date.now(),
@@ -177,7 +187,7 @@ export class N8nApiClient {
             response = await this.client.post('/node-types', {});
           } catch (postError) {
             // If no node types endpoint works, return empty array
-            console.warn('Node types endpoint not available, returning empty array');
+            console.error('[N8nClient] Node types endpoint not available, returning empty array');
             return [];
           }
         }
@@ -192,7 +202,7 @@ export class N8nApiClient {
       this.setCache(cacheKey, nodeTypesArray, this.cacheTtl * 4);
       return nodeTypesArray;
     } catch (error: any) {
-      console.warn('Failed to fetch node types:', error?.message || 'Unknown error');
+      console.error('[N8nClient] Failed to fetch node types:', error?.message || 'Unknown error');
       return [];
     }
   }

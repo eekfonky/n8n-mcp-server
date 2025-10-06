@@ -164,7 +164,7 @@ export class MemoryManager {
       const memoryIncrease = endMemory.used - startMemory.used;
       
       if (memoryIncrease > limitMB) {
-        console.warn(`Operation exceeded memory limit: ${memoryIncrease}MB > ${limitMB}MB`);
+        console.error(`[Performance] Operation exceeded memory limit: ${memoryIncrease}MB > ${limitMB}MB`);
         this.forceGarbageCollection();
       }
       

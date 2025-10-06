@@ -40,12 +40,12 @@ export class WorkflowNodeAnalyzer {
    * Analyze all workflows to discover available nodes
    */
   async discoverNodesFromWorkflows(): Promise<NodeCatalog> {
-    console.log('🔍 Discovering nodes from existing workflows...');
+    console.error('[Analyzer] Discovering nodes from existing workflows...');
 
     try {
       // Get all workflows
       const workflows = await this.n8nClient.getWorkflows();
-      console.log(`Found ${workflows.length} workflows to analyze`);
+      console.error(`[Analyzer] Found ${workflows.length} workflows to analyze`);
 
       // Clear previous discovery
       this.nodeMap.clear();
@@ -56,14 +56,14 @@ export class WorkflowNodeAnalyzer {
           const fullWorkflow = await this.n8nClient.getWorkflow(workflow.id);
           this.analyzeWorkflowNodes(fullWorkflow);
         } catch (error) {
-          console.warn(`Failed to analyze workflow ${workflow.id}:`, error);
+          console.error(`[Analyzer] Failed to analyze workflow ${workflow.id}:`, error);
         }
       }
 
       // Build the catalog
       this.catalog = this.buildCatalog();
 
-      console.log(`✅ Discovered ${this.catalog.totalNodes} unique node types`);
+      console.error(`[Analyzer] Discovered ${this.catalog.totalNodes} unique node types`);
       return this.catalog;
 
     } catch (error) {

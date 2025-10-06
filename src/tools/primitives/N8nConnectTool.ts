@@ -298,7 +298,7 @@ export class N8nConnectTool {
       const toNodeObj = workflow.nodes?.find(n => n.id === conn.to || n.name === conn.to);
 
       if (!fromNodeObj || !toNodeObj) {
-        console.warn(`Skipping connection: node not found (${conn.from} -> ${conn.to})`);
+        console.error(`[Connect] Skipping connection: node not found (${conn.from} -> ${conn.to})`);
         continue;
       }
 

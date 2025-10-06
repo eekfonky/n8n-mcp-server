@@ -50,7 +50,7 @@ export class EnhancedNodeDiscovery {
       return this.lastDiscovery;
     }
 
-    console.log('🔍 Starting enhanced node discovery...');
+    console.error('[Discovery] Starting enhanced node discovery...');
 
     const sources = {
       workflowAnalysis: false,
@@ -64,9 +64,9 @@ export class EnhancedNodeDiscovery {
       try {
         catalog = await this.workflowAnalyzer.discoverNodesFromWorkflows();
         sources.workflowAnalysis = true;
-        console.log('✅ Workflow analysis completed successfully');
+        console.error('[Discovery] Workflow analysis completed successfully');
       } catch (error) {
-        console.warn('⚠️ Workflow analysis failed:', error);
+        console.error('[Discovery] Workflow analysis failed:', error);
         throw new Error('Failed to discover nodes from workflows');
       }
     }
@@ -76,9 +76,9 @@ export class EnhancedNodeDiscovery {
       try {
         await this.supplementWithApiDiscovery(catalog);
         sources.apiDiscovery = true;
-        console.log('✅ API discovery supplemented the catalog');
+        console.error('[Discovery] API discovery supplemented the catalog');
       } catch (error) {
-        console.warn('⚠️ API discovery failed (expected):', error);
+        console.error('[Discovery] API discovery failed (expected):', error);
         // This is expected to fail with current API limitations
       }
     }
@@ -105,7 +105,7 @@ export class EnhancedNodeDiscovery {
     try {
       const nodeTypes = await this.n8nClient.getNodeTypes();
       if (Array.isArray(nodeTypes) && nodeTypes.length > 0) {
-        console.log(`Found ${nodeTypes.length} node types from API`);
+        console.error(`[Discovery] Found ${nodeTypes.length} node types from API`);
         // Merge with workflow-discovered nodes
         // Implementation would go here
       }

@@ -10,7 +10,7 @@ dotenv.config();
 // Handle graceful shutdown
 async function main() {
   const mode = process.env.MCP_MODE || 'stdio';
-  const port = parseInt(process.env.MCP_PORT || '3000');
+  const port = parseInt(process.env.MCP_PORT || '3000', 10);
 
   const server = new N8nMcpServer();
 
