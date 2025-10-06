@@ -105,8 +105,8 @@ setup_secrets() {
     fi
 
     # Set secrets
-    docker mcp secret set n8n-server.base_url "$N8N_BASE_URL"
-    docker mcp secret set n8n-server.api_key "$N8N_API_KEY"
+    docker mcp secret set "n8n-server.base_url=$N8N_BASE_URL"
+    docker mcp secret set "n8n-server.api_key=$N8N_API_KEY"
 
     echo "✅ Secrets configured"
 }
@@ -166,8 +166,8 @@ main() {
         setup_secrets
     else
         echo "✅ Using environment variables for n8n connection"
-        docker mcp secret set n8n-server.base_url "$N8N_BASE_URL"
-        docker mcp secret set n8n-server.api_key "$N8N_API_KEY"
+        docker mcp secret set "n8n-server.base_url=$N8N_BASE_URL"
+        docker mcp secret set "n8n-server.api_key=$N8N_API_KEY"
     fi
 
     test_connection
