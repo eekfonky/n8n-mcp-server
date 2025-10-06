@@ -47,7 +47,40 @@ export class MCPRequestHandler implements IMCPRequestHandler {
     }
 
     const result = await tool.handleToolCall(request);
-    return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+
+    // Safely stringify the result with proper Unicode handling
+    // Use replacer to handle any problematic characters
+    const safeResult = this.sanitizeForJson(result);
+    return { content: [{ type: 'text', text: JSON.stringify(safeResult, null, 2) }] };
+  }
+
+  /**
+   * Sanitize data for safe JSON serialization
+   * Handles Unicode characters and potential encoding issues
+   */
+  private sanitizeForJson(obj: any): any {
+    if (obj === null || obj === undefined) {
+      return obj;
+    }
+
+    if (typeof obj === 'string') {
+      // Ensure valid UTF-8 by normalizing the string
+      return obj.normalize('NFC');
+    }
+
+    if (Array.isArray(obj)) {
+      return obj.map(item => this.sanitizeForJson(item));
+    }
+
+    if (typeof obj === 'object' && obj.constructor === Object) {
+      const sanitized: Record<string, any> = {};
+      for (const [key, value] of Object.entries(obj)) {
+        sanitized[key] = this.sanitizeForJson(value);
+      }
+      return sanitized;
+    }
+
+    return obj;
   }
 
   async handleResourceRead(request: ReadResourceRequest): Promise<any> {

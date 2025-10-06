@@ -113,10 +113,10 @@ describe('n8n MCP Primitives Test Suite', () => {
     discoverTool = new N8nDiscoverTool(mockClient, nodeDiscovery);
     createTool = new N8nCreateTool(mockClient, nodeDiscovery);
     executeTool = new N8nExecuteTool(mockClient);
-    inspectTool = new N8nInspectTool(mockClient);
+    inspectTool = new N8nInspectTool(mockClient, nodeDiscovery);
     removeTool = new N8nRemoveTool(mockClient);
-    modifyTool = new N8nModifyTool(mockClient);
-    connectTool = new N8nConnectTool(mockClient, nodeDiscovery);
+    modifyTool = new N8nModifyTool(mockClient, nodeDiscovery);
+    connectTool = new N8nConnectTool(mockClient);
     controlTool = new N8nControlTool(mockClient);
     searchTool = new N8nSearchTool(mockClient, nodeDiscovery);
     validateTool = new N8nValidateTool(mockClient, nodeDiscovery);
@@ -125,20 +125,28 @@ describe('n8n MCP Primitives Test Suite', () => {
   describe('N8nDiscoverTool', () => {
     test('should discover nodes from workflows', async () => {
       const result = await discoverTool.handleToolCall({
-        params: { name: 'discover_nodes', arguments: { target: 'nodes', method: 'workflows' } }
+        method: "tools/call" as const,
+        params: {
+          name: 'n8n_discover',
+          arguments: { type: 'nodes' }
+        }
       });
 
-      expect(result.success).toBe(true);
+      expect(result.error).toBeUndefined();
       expect(result.nodes).toBeDefined();
       expect(Array.isArray(result.nodes)).toBe(true);
     });
 
     test('should discover workflows', async () => {
       const result = await discoverTool.handleToolCall({
-        params: { name: 'discover_workflows', arguments: { target: 'workflows' } }
+        method: "tools/call" as const,
+        params: {
+          name: 'n8n_discover',
+          arguments: { type: 'workflows' }
+        }
       });
 
-      expect(result.success).toBe(true);
+      expect(result.error).toBeUndefined();
       expect(result.workflows).toBeDefined();
       expect(Array.isArray(result.workflows)).toBe(true);
       expect(result.workflows.length).toBeGreaterThan(0);
@@ -146,10 +154,14 @@ describe('n8n MCP Primitives Test Suite', () => {
 
     test('should discover credentials', async () => {
       const result = await discoverTool.handleToolCall({
-        params: { name: 'discover_credentials', arguments: { target: 'credentials' } }
+        method: "tools/call" as const,
+        params: {
+          name: 'n8n_discover',
+          arguments: { type: 'credentials' }
+        }
       });
 
-      expect(result.success).toBe(true);
+      expect(result.error).toBeUndefined();
       expect(result.credentials).toBeDefined();
       expect(Array.isArray(result.credentials)).toBe(true);
     });
@@ -158,17 +170,18 @@ describe('n8n MCP Primitives Test Suite', () => {
   describe('N8nCreateTool', () => {
     test('should create a basic workflow', async () => {
       const result = await createTool.handleToolCall({
+        method: "tools/call" as const,
         params: {
-          name: 'create_workflow',
+          name: 'n8n_create',
           arguments: {
             type: 'workflow',
-            workflowName: 'Test Workflow',
+            name: 'Test Workflow',
             template: 'basic'
           }
         }
       });
 
-      expect(result.success).toBe(true);
+      expect(result.error).toBeUndefined();
       expect(result.workflow).toBeDefined();
       expect(result.workflow.name).toBe('Test Workflow');
       expect(result.workflow.id).toBeDefined();
@@ -176,48 +189,50 @@ describe('n8n MCP Primitives Test Suite', () => {
 
     test('should create a webhook workflow', async () => {
       const result = await createTool.handleToolCall({
+        method: "tools/call" as const,
         params: {
-          name: 'create_workflow',
+          name: 'n8n_create',
           arguments: {
             type: 'workflow',
-            workflowName: 'Webhook Test',
+            name: 'Webhook Test',
             template: 'webhook'
           }
         }
       });
 
-      expect(result.success).toBe(true);
+      expect(result.error).toBeUndefined();
       expect(result.workflow).toBeDefined();
-      expect(result.workflow.nodes).toBeDefined();
-      expect(result.workflow.nodes.length).toBeGreaterThan(0);
+      expect(result.workflow.nodeCount).toBeGreaterThan(0);
     });
 
     test('should create a node', async () => {
       // First create a workflow
       const workflowResult = await createTool.handleToolCall({
+        method: "tools/call" as const,
         params: {
-          name: 'create_workflow',
+          name: 'n8n_create',
           arguments: {
             type: 'workflow',
-            workflowName: 'Test Workflow',
+            name: 'Test Workflow',
             template: 'basic'
           }
         }
       });
 
       const result = await createTool.handleToolCall({
+        method: "tools/call" as const,
         params: {
-          name: 'create_node',
+          name: 'n8n_create',
           arguments: {
             type: 'node',
-            workflowId: workflowResult.workflow.id,
+            workflow: workflowResult.workflow.id,
             nodeType: 'n8n-nodes-base.httpRequest',
-            nodeName: 'HTTP Request Node'
+            name: 'HTTP Request Node'
           }
         }
       });
 
-      expect(result.success).toBe(true);
+      expect(result.error).toBeUndefined();
       expect(result.node).toBeDefined();
       expect(result.node.type).toBe('n8n-nodes-base.httpRequest');
     });
@@ -227,77 +242,104 @@ describe('n8n MCP Primitives Test Suite', () => {
     test('should execute a workflow', async () => {
       // Create a test workflow first
       const createResult = await createTool.handleToolCall({
+        method: "tools/call" as const,
         params: {
-          type: 'workflow',
-          name: 'Execute Test',
-          template: 'basic'
+          name: 'n8n_create',
+          arguments: {
+            type: 'workflow',
+            name: 'Execute Test',
+            template: 'basic'
+          }
         }
       });
 
       const result = await executeTool.handleToolCall({
+        method: "tools/call" as const,
         params: {
-          workflowId: createResult.workflow.id,
-          data: { test: 'data' }
+          name: 'n8n_execute',
+          arguments: {
+            workflow: createResult.workflow.id,
+            data: { test: 'data' }
+          }
         }
       });
 
-      expect(result.success).toBe(true);
+      expect(result.error).toBeUndefined();
       expect(result.execution).toBeDefined();
       expect(result.execution.id).toBeDefined();
     });
 
     test('should handle execution with invalid workflow ID', async () => {
       const result = await executeTool.handleToolCall({
+        method: "tools/call" as const,
         params: {
-          workflowId: 'non-existent-id'
+          name: 'n8n_execute',
+          arguments: {
+            workflow: 'non-existent-id'
+          }
         }
       });
 
-      expect(result.success).toBe(false);
-      expect(result.error).toBeDefined();
+      expect(result.error).toBe(true);
     });
   });
 
   describe('N8nInspectTool', () => {
     test('should inspect a workflow', async () => {
       const result = await inspectTool.handleToolCall({
+        method: "tools/call" as const,
         params: {
-          target: 'workflow',
-          id: 'test-webhook-1'
+          name: 'n8n_inspect',
+          arguments: {
+            type: 'workflow',
+            id: 'test-webhook-1'
+          }
         }
       });
 
-      expect(result.success).toBe(true);
-      expect(result.workflow).toBeDefined();
-      expect(result.analysis).toBeDefined();
+      expect(result.error).toBeUndefined();
+      expect(result.type).toBe('workflow');
+      expect(result.id).toBeDefined();
     });
 
     test('should inspect an execution', async () => {
       // Create and execute a workflow first
       const createResult = await createTool.handleToolCall({
+        method: "tools/call" as const,
         params: {
-          type: 'workflow',
-          name: 'Inspect Test',
-          template: 'basic'
+          name: 'n8n_create',
+          arguments: {
+            type: 'workflow',
+            name: 'Inspect Test',
+            template: 'basic'
+          }
         }
       });
 
       const executeResult = await executeTool.handleToolCall({
+        method: "tools/call" as const,
         params: {
-          workflowId: createResult.workflow.id
+          name: 'n8n_execute',
+          arguments: {
+            workflow: createResult.workflow.id
+          }
         }
       });
 
       const result = await inspectTool.handleToolCall({
+        method: "tools/call" as const,
         params: {
-          target: 'execution',
-          id: executeResult.execution.id
+          name: 'n8n_inspect',
+          arguments: {
+            type: 'execution',
+            id: executeResult.execution.id
+          }
         }
       });
 
-      expect(result.success).toBe(true);
-      expect(result.execution).toBeDefined();
-      expect(result.analysis).toBeDefined();
+      expect(result.error).toBeUndefined();
+      expect(result.type).toBe('execution');
+      expect(result.id).toBeDefined();
     });
   });
 
@@ -305,34 +347,47 @@ describe('n8n MCP Primitives Test Suite', () => {
     test('should remove a workflow', async () => {
       // Create a test workflow first
       const createResult = await createTool.handleToolCall({
+        method: "tools/call" as const,
         params: {
-          type: 'workflow',
-          name: 'Remove Test',
-          template: 'basic'
+          name: 'n8n_create',
+          arguments: {
+            type: 'workflow',
+            name: 'Remove Test',
+            template: 'basic'
+          }
         }
       });
 
       const result = await removeTool.handleToolCall({
+        method: "tools/call" as const,
         params: {
-          target: 'workflow',
-          id: createResult.workflow.id
+          name: 'n8n_remove',
+          arguments: {
+            type: 'workflow',
+            workflow: createResult.workflow.id,
+            confirm: true
+          }
         }
       });
 
-      expect(result.success).toBe(true);
-      expect(result.message).toContain('removed');
+      expect(result.error).toBeUndefined();
+      expect(result.message).toContain('deleted');
     });
 
     test('should handle removing non-existent workflow', async () => {
       const result = await removeTool.handleToolCall({
+        method: "tools/call" as const,
         params: {
-          target: 'workflow',
-          id: 'non-existent-id'
+          name: 'n8n_remove',
+          arguments: {
+            type: 'workflow',
+            workflow: 'non-existent-id',
+            confirm: true
+          }
         }
       });
 
-      expect(result.success).toBe(false);
-      expect(result.error).toBeDefined();
+      expect(result.error).toBe(true);
     });
   });
 
@@ -340,25 +395,31 @@ describe('n8n MCP Primitives Test Suite', () => {
     test('should modify a workflow', async () => {
       // Create a test workflow first
       const createResult = await createTool.handleToolCall({
+        method: "tools/call" as const,
         params: {
-          type: 'workflow',
-          name: 'Modify Test',
-          template: 'basic'
+          name: 'n8n_create',
+          arguments: {
+            type: 'workflow',
+            name: 'Modify Test',
+            template: 'basic'
+          }
         }
       });
 
       const result = await modifyTool.handleToolCall({
+        method: "tools/call" as const,
         params: {
-          target: 'workflow',
-          id: createResult.workflow.id,
-          changes: {
+          name: 'n8n_modify',
+          arguments: {
+            type: 'workflow',
+            workflow: createResult.workflow.id,
             name: 'Modified Workflow Name',
             tags: ['modified', 'test']
           }
         }
       });
 
-      expect(result.success).toBe(true);
+      expect(result.error).toBeUndefined();
       expect(result.workflow).toBeDefined();
       expect(result.workflow.name).toBe('Modified Workflow Name');
     });
@@ -368,33 +429,45 @@ describe('n8n MCP Primitives Test Suite', () => {
     test('should connect nodes in a workflow', async () => {
       // Create a workflow with multiple nodes
       const createResult = await createTool.handleToolCall({
+        method: "tools/call" as const,
         params: {
-          type: 'workflow',
-          name: 'Connect Test',
-          template: 'webhook'
+          name: 'n8n_create',
+          arguments: {
+            type: 'workflow',
+            name: 'Connect Test',
+            template: 'webhook'
+          }
         }
       });
 
       // Add another node
       const nodeResult = await createTool.handleToolCall({
+        method: "tools/call" as const,
         params: {
-          type: 'node',
-          workflowId: createResult.workflow.id,
-          nodeType: 'n8n-nodes-base.httpRequest',
-          name: 'HTTP Request'
+          name: 'n8n_create',
+          arguments: {
+            type: 'node',
+            workflow: createResult.workflow.id,
+            nodeType: 'n8n-nodes-base.httpRequest',
+            name: 'HTTP Request'
+          }
         }
       });
 
       const result = await connectTool.handleToolCall({
+        method: "tools/call" as const,
         params: {
-          workflowId: createResult.workflow.id,
-          sourceNode: 'webhook-node',
-          targetNode: nodeResult.node.id,
-          connectionType: 'main'
+          name: 'n8n_connect',
+          arguments: {
+            action: 'add',
+            workflow: createResult.workflow.id,
+            from: 'webhook',
+            to: nodeResult.node.id
+          }
         }
       });
 
-      expect(result.success).toBe(true);
+      expect(result.error).toBeUndefined();
       expect(result.connection).toBeDefined();
     });
   });
@@ -403,49 +476,69 @@ describe('n8n MCP Primitives Test Suite', () => {
     test('should activate a workflow', async () => {
       // Create a test workflow first
       const createResult = await createTool.handleToolCall({
+        method: "tools/call" as const,
         params: {
-          type: 'workflow',
-          name: 'Control Test',
-          template: 'basic'
+          name: 'n8n_create',
+          arguments: {
+            type: 'workflow',
+            name: 'Control Test',
+            template: 'basic'
+          }
         }
       });
 
       const result = await controlTool.handleToolCall({
+        method: "tools/call" as const,
         params: {
-          action: 'activate',
-          workflowId: createResult.workflow.id
+          name: 'n8n_control',
+          arguments: {
+            action: 'activate',
+            workflow: createResult.workflow.id
+          }
         }
       });
 
-      expect(result.success).toBe(true);
+      expect(result.error).toBeUndefined();
       expect(result.workflow.active).toBe(true);
     });
 
     test('should deactivate a workflow', async () => {
       // Create and activate a workflow first
       const createResult = await createTool.handleToolCall({
+        method: "tools/call" as const,
         params: {
-          type: 'workflow',
-          name: 'Control Test',
-          template: 'basic'
+          name: 'n8n_create',
+          arguments: {
+            type: 'workflow',
+            name: 'Control Test',
+            template: 'basic'
+          }
         }
       });
 
       await controlTool.handleToolCall({
+        method: "tools/call" as const,
         params: {
-          action: 'activate',
-          workflowId: createResult.workflow.id
+          name: 'n8n_control',
+          arguments: {
+            action: 'activate',
+            workflow: createResult.workflow.id
+          }
         }
       });
 
       const result = await controlTool.handleToolCall({
+        method: "tools/call" as const,
         params: {
-          action: 'deactivate',
-          workflowId: createResult.workflow.id
+          name: 'n8n_control',
+          arguments: {
+            action: 'deactivate',
+            workflow: createResult.workflow.id
+          }
         }
       });
 
-      expect(result.success).toBe(true);
+      expect(result.error).toBeUndefined();
       expect(result.workflow.active).toBe(false);
     });
   });
@@ -453,58 +546,74 @@ describe('n8n MCP Primitives Test Suite', () => {
   describe('N8nSearchTool', () => {
     test('should search workflows', async () => {
       const result = await searchTool.handleToolCall({
+        method: "tools/call" as const,
         params: {
-          target: 'workflows',
-          query: 'webhook'
+          name: 'n8n_search',
+          arguments: {
+            query: 'webhook',
+            type: 'workflows'
+          }
         }
       });
 
-      expect(result.success).toBe(true);
-      expect(result.results).toBeDefined();
-      expect(Array.isArray(result.results)).toBe(true);
+      expect(result.error).toBeUndefined();
+      expect(result.categories).toBeDefined();
+      expect(typeof result.categories).toBe('object');
     });
 
     test('should search nodes', async () => {
       const result = await searchTool.handleToolCall({
+        method: "tools/call" as const,
         params: {
-          target: 'nodes',
-          query: 'http'
+          name: 'n8n_search',
+          arguments: {
+            query: 'http',
+            type: 'nodes'
+          }
         }
       });
 
-      expect(result.success).toBe(true);
-      expect(result.results).toBeDefined();
-      expect(Array.isArray(result.results)).toBe(true);
+      expect(result.error).toBeUndefined();
+      expect(result.categories).toBeDefined();
+      expect(typeof result.categories).toBe('object');
     });
   });
 
   describe('N8nValidateTool', () => {
     test('should validate a workflow', async () => {
       const result = await validateTool.handleToolCall({
+        method: "tools/call" as const,
         params: {
-          target: 'workflow',
-          id: 'test-webhook-1'
+          name: 'n8n_validate',
+          arguments: {
+            type: 'workflow',
+            workflow: 'test-webhook-1'
+          }
         }
       });
 
-      expect(result.success).toBe(true);
+      expect(result.error).toBeUndefined();
       expect(result.validation).toBeDefined();
       expect(result.validation.valid).toBeDefined();
     });
 
     test('should validate node configuration', async () => {
       const result = await validateTool.handleToolCall({
+        method: "tools/call" as const,
         params: {
-          target: 'node',
-          nodeType: 'n8n-nodes-base.webhook',
-          config: {
-            httpMethod: 'POST',
-            path: 'test-webhook'
+          name: 'n8n_validate',
+          arguments: {
+            type: 'parameters',
+            nodeType: 'n8n-nodes-base.webhook',
+            parameters: {
+              httpMethod: 'POST',
+              path: 'test-webhook'
+            }
           }
         }
       });
 
-      expect(result.success).toBe(true);
+      expect(result.error).toBeUndefined();
       expect(result.validation).toBeDefined();
       expect(result.validation.valid).toBeDefined();
     });
@@ -514,134 +623,396 @@ describe('n8n MCP Primitives Test Suite', () => {
     test('should create, modify, and execute a complete workflow', async () => {
       // 1. Create a webhook workflow
       const createResult = await createTool.handleToolCall({
+        method: "tools/call" as const,
         params: {
-          type: 'workflow',
-          name: 'Integration Test Workflow',
-          template: 'webhook'
+          name: 'n8n_create',
+          arguments: {
+            type: 'workflow',
+            name: 'Integration Test Workflow',
+            template: 'webhook'
+          }
         }
       });
-      expect(createResult.success).toBe(true);
+      expect(createResult.error).toBeUndefined();
 
       // 2. Add an HTTP Request node
       const nodeResult = await createTool.handleToolCall({
+        method: "tools/call" as const,
         params: {
-          type: 'node',
-          workflowId: createResult.workflow.id,
-          nodeType: 'n8n-nodes-base.httpRequest',
-          name: 'API Call'
+          name: 'n8n_create',
+          arguments: {
+            type: 'node',
+            workflow: createResult.workflow.id,
+            nodeType: 'n8n-nodes-base.httpRequest',
+            name: 'API Call'
+          }
         }
       });
-      expect(nodeResult.success).toBe(true);
+      expect(nodeResult.error).toBeUndefined();
 
       // 3. Connect the nodes
       const connectResult = await connectTool.handleToolCall({
+        method: "tools/call" as const,
         params: {
-          workflowId: createResult.workflow.id,
-          sourceNode: 'webhook-node',
-          targetNode: nodeResult.node.id,
-          connectionType: 'main'
+          name: 'n8n_connect',
+          arguments: {
+            action: 'add',
+            workflow: createResult.workflow.id,
+            from: 'webhook',
+            to: nodeResult.node.id
+          }
         }
       });
-      expect(connectResult.success).toBe(true);
+      expect(connectResult.error).toBeUndefined();
 
       // 4. Modify workflow settings
       const modifyResult = await modifyTool.handleToolCall({
+        method: "tools/call" as const,
         params: {
-          target: 'workflow',
-          id: createResult.workflow.id,
-          changes: {
+          name: 'n8n_modify',
+          arguments: {
+            type: 'workflow',
+            workflow: createResult.workflow.id,
             tags: ['integration', 'test', 'webhook']
           }
         }
       });
-      expect(modifyResult.success).toBe(true);
+      expect(modifyResult.error).toBeUndefined();
 
       // 5. Validate the workflow
       const validateResult = await validateTool.handleToolCall({
+        method: "tools/call" as const,
         params: {
-          target: 'workflow',
-          id: createResult.workflow.id
+          name: 'n8n_validate',
+          arguments: {
+            type: 'workflow',
+            workflow: createResult.workflow.id
+          }
         }
       });
-      expect(validateResult.success).toBe(true);
+      expect(validateResult.error).toBeUndefined();
 
       // 6. Activate the workflow
       const activateResult = await controlTool.handleToolCall({
+        method: "tools/call" as const,
         params: {
-          action: 'activate',
-          workflowId: createResult.workflow.id
+          name: 'n8n_control',
+          arguments: {
+            action: 'activate',
+            workflow: createResult.workflow.id
+          }
         }
       });
-      expect(activateResult.success).toBe(true);
+      expect(activateResult.error).toBeUndefined();
 
       // 7. Execute the workflow
       const executeResult = await executeTool.handleToolCall({
+        method: "tools/call" as const,
         params: {
-          workflowId: createResult.workflow.id,
-          data: { test: 'integration' }
+          name: 'n8n_execute',
+          arguments: {
+            workflow: createResult.workflow.id,
+            data: { test: 'integration' }
+          }
         }
       });
-      expect(executeResult.success).toBe(true);
+      expect(executeResult.error).toBeUndefined();
 
       // 8. Inspect the execution
       const inspectResult = await inspectTool.handleToolCall({
+        method: "tools/call" as const,
         params: {
-          target: 'execution',
-          id: executeResult.execution.id
+          name: 'n8n_inspect',
+          arguments: {
+            type: 'execution',
+            id: executeResult.execution.id
+          }
         }
       });
-      expect(inspectResult.success).toBe(true);
+      expect(inspectResult.error).toBeUndefined();
+      expect(inspectResult.type).toBe('execution');
 
       // 9. Search for our workflow
       const searchResult = await searchTool.handleToolCall({
+        method: "tools/call" as const,
         params: {
-          target: 'workflows',
-          query: 'Integration Test'
+          name: 'n8n_search',
+          arguments: {
+            query: 'Integration Test',
+            type: 'workflows'
+          }
         }
       });
-      expect(searchResult.success).toBe(true);
-      expect(searchResult.results.length).toBeGreaterThan(0);
+      expect(searchResult.error).toBeUndefined();
+      expect(Object.keys(searchResult.categories).length).toBeGreaterThan(0);
 
       // 10. Clean up - remove the workflow
       const removeResult = await removeTool.handleToolCall({
+        method: "tools/call" as const,
         params: {
-          target: 'workflow',
-          id: createResult.workflow.id
+          name: 'n8n_remove',
+          arguments: {
+            type: 'workflow',
+            workflow: createResult.workflow.id,
+            confirm: true,
+            force: true
+          }
         }
       });
-      expect(removeResult.success).toBe(true);
+      expect(removeResult.error).toBeUndefined();
     });
   });
 
   describe('Error Handling', () => {
     test('should handle invalid tool parameters gracefully', async () => {
       const result = await discoverTool.handleToolCall({
-        params: { target: 'invalid-target' }
+        method: "tools/call" as const,
+        params: {
+          name: 'n8n_discover',
+          arguments: { type: 'invalid-target' }
+        }
       });
 
-      expect(result.success).toBe(false);
-      expect(result.error).toBeDefined();
+      expect(result.error).toBe(true);
     });
 
     test('should handle missing required parameters', async () => {
       const result = await createTool.handleToolCall({
-        params: {}
+        method: "tools/call" as const,
+        params: {
+          name: 'n8n_create',
+          arguments: {}
+        }
       });
 
-      expect(result.success).toBe(false);
-      expect(result.error).toBeDefined();
+      expect(result.error).toBe(true);
     });
 
     test('should handle server errors gracefully', async () => {
       // Simulate server error by using invalid workflow ID
       const result = await executeTool.handleToolCall({
+        method: "tools/call" as const,
         params: {
-          workflowId: 'invalid-id-that-causes-error'
+          name: 'n8n_execute',
+          arguments: {
+            workflow: 'invalid-id-that-causes-error'
+          }
         }
       });
 
-      expect(result.success).toBe(false);
-      expect(result.error).toBeDefined();
+      expect(result.error).toBe(true);
+    });
+  });
+
+  describe('N8nBatchTool', () => {
+    let batchTool: any;
+
+    beforeEach(() => {
+      const { N8nBatchTool } = require('../tools/primitives/N8nBatchTool.js');
+      batchTool = new N8nBatchTool(mockClient, nodeDiscovery);
+    });
+
+    test('should perform batch activation', async () => {
+      // Create multiple workflows
+      const wf1 = await createTool.handleToolCall({
+        method: "tools/call" as const,
+        params: {
+          name: 'n8n_create',
+          arguments: { type: 'workflow', name: 'Batch Test 1', template: 'basic' }
+        }
+      });
+
+      const wf2 = await createTool.handleToolCall({
+        method: "tools/call" as const,
+        params: {
+          name: 'n8n_create',
+          arguments: { type: 'workflow', name: 'Batch Test 2', template: 'basic' }
+        }
+      });
+
+      const result = await batchTool.handleToolCall({
+        method: "tools/call" as const,
+        params: {
+          name: 'n8n_batch',
+          arguments: {
+            action: 'execute',
+            items: [wf1.workflow.id, wf2.workflow.id]
+          }
+        }
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.data).toBeDefined();
+    });
+  });
+
+  describe('N8nDebugTool', () => {
+    let debugTool: any;
+
+    beforeEach(() => {
+      const { N8nDebugTool } = require('../tools/primitives/N8nDebugTool.js');
+      debugTool = new N8nDebugTool(mockClient, nodeDiscovery);
+    });
+
+    test('should analyze workflow execution', async () => {
+      // Create and execute a workflow
+      const createResult = await createTool.handleToolCall({
+        method: "tools/call" as const,
+        params: {
+          name: 'n8n_create',
+          arguments: { type: 'workflow', name: 'Debug Test', template: 'basic' }
+        }
+      });
+
+      const executeResult = await executeTool.handleToolCall({
+        method: "tools/call" as const,
+        params: {
+          name: 'n8n_execute',
+          arguments: { workflow: createResult.workflow.id }
+        }
+      });
+
+      const result = await debugTool.handleToolCall({
+        method: "tools/call" as const,
+        params: {
+          name: 'n8n_debug',
+          arguments: {
+            action: 'analyze',
+            target: {
+              executionId: executeResult.execution.id
+            }
+          }
+        }
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.data).toBeDefined();
+    });
+  });
+
+  describe('N8nExportTool', () => {
+    let exportTool: any;
+
+    beforeEach(() => {
+      const { N8nExportTool } = require('../tools/primitives/N8nExportTool.js');
+      exportTool = new N8nExportTool(mockClient);
+    });
+
+    test('should export workflow as JSON', async () => {
+      const createResult = await createTool.handleToolCall({
+        method: "tools/call" as const,
+        params: {
+          name: 'n8n_create',
+          arguments: { type: 'workflow', name: 'Export Test', template: 'basic' }
+        }
+      });
+
+      const result = await exportTool.handleToolCall({
+        method: "tools/call" as const,
+        params: {
+          name: 'n8n_export',
+          arguments: {
+            action: 'export',
+            target: {
+              workflowIds: [createResult.workflow.id]
+            },
+            format: 'json'
+          }
+        }
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.data).toBeDefined();
+    });
+  });
+
+  describe('N8nMonitorTool', () => {
+    let monitorTool: any;
+
+    beforeEach(() => {
+      const { N8nMonitorTool } = require('../tools/primitives/N8nMonitorTool.js');
+      monitorTool = new N8nMonitorTool(mockClient);
+    });
+
+    test('should check execution status', async () => {
+      const createResult = await createTool.handleToolCall({
+        method: "tools/call" as const,
+        params: {
+          name: 'n8n_create',
+          arguments: { type: 'workflow', name: 'Monitor Test', template: 'basic' }
+        }
+      });
+
+      const executeResult = await executeTool.handleToolCall({
+        method: "tools/call" as const,
+        params: {
+          name: 'n8n_execute',
+          arguments: { workflow: createResult.workflow.id }
+        }
+      });
+
+      const result = await monitorTool.handleToolCall({
+        method: "tools/call" as const,
+        params: {
+          name: 'n8n_monitor',
+          arguments: {
+            action: 'status',
+            executionId: executeResult.execution.id
+          }
+        }
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.data).toBeDefined();
+    });
+  });
+
+  describe('N8nTemplateTool', () => {
+    let templateTool: any;
+
+    beforeEach(() => {
+      const { N8nTemplateTool } = require('../tools/primitives/N8nTemplateTool.js');
+      templateTool = new N8nTemplateTool(mockClient, nodeDiscovery);
+    });
+
+    test('should list available templates', async () => {
+      const result = await templateTool.handleToolCall({
+        method: "tools/call" as const,
+        params: {
+          name: 'n8n_template',
+          arguments: {
+            action: 'browse'
+          }
+        }
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.data).toBeDefined();
+      expect(result.data.templates).toBeDefined();
+    });
+
+    test('should create template from workflow', async () => {
+      const createResult = await createTool.handleToolCall({
+        method: "tools/call" as const,
+        params: {
+          name: 'n8n_create',
+          arguments: { type: 'workflow', name: 'Template Source', template: 'webhook' }
+        }
+      });
+
+      const result = await templateTool.handleToolCall({
+        method: "tools/call" as const,
+        params: {
+          name: 'n8n_template',
+          arguments: {
+            action: 'analyze',
+            workflowId: createResult.workflow.id
+          }
+        }
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.data).toBeDefined();
     });
   });
 });

@@ -1,9 +1,12 @@
+---
 version: 2
 name: n8n-mcp-catalog
 displayName: n8n MCP Server Catalog
 registry:
   n8n-server:
-    description: "Enterprise-grade n8n workflow automation MCP server with 15 powerful primitive tools for complete workflow management"
+    description: >
+      Enterprise-grade n8n workflow automation MCP server with 15 powerful
+      primitive tools for complete workflow management
     title: "n8n Workflow Automation"
     type: "server"
     dateAdded: "2025-10-02T00:00:00Z"
@@ -84,6 +87,7 @@ registry:
     # Metadata for catalog organization
     metadata:
       category: "automation"
-      tags: ["workflow", "automation", "n8n", "integration", "api", "enterprise"]
+      tags:
+        ["workflow", "automation", "n8n", "integration", "api", "enterprise"]
       license: "MIT License"
       owner: "eekfonky"

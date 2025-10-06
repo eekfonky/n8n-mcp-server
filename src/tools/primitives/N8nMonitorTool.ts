@@ -297,7 +297,7 @@ export class N8nMonitorTool {
           logs: this.extractExecutionLogs(execution),
           nodes: execution.data?.resultData?.runData ?
             Object.keys(execution.data.resultData.runData).map(nodeId => {
-              const nodeRun = execution.data?.resultData?.runData?.[nodeId]?.[0];
+              const nodeRun = execution.data?.resultData?.runData?.[nodeId]?.[0] as any;
               return {
                 nodeId,
                 status: nodeRun?.error ? 'error' : 'success',

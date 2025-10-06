@@ -246,17 +246,21 @@ export class N8nRemoveTool {
     }
 
     // Remove the connection
-    const updatedConnections = { ...workflow.connections };
+    const updatedConnections = { ...workflow.connections } as Record<string, Record<string, unknown[]>>;
     let connectionRemoved = false;
 
-    if (updatedConnections[fromNodeObj.id]) {
-      for (const [outputType, outputs] of Object.entries(updatedConnections[fromNodeObj.id])) {
-        const filteredOutputs = (outputs as any[]).map((outputArray: any[]) =>
-          outputArray.filter((connection: any) => connection.node !== toNodeObj.id)
+    const fromConnections = updatedConnections[fromNodeObj.id];
+    if (fromConnections) {
+      for (const [outputType, outputs] of Object.entries(fromConnections)) {
+        const filteredOutputs = (outputs as unknown[][]).map((outputArray: unknown[]) =>
+          outputArray.filter((connection: unknown) => {
+            const conn = connection as { node?: string };
+            return conn.node !== toNodeObj.id;
+          })
         );
 
         // Check if any connections were removed
-        const originalLength = (outputs as any[]).reduce((sum, arr) => sum + arr.length, 0);
+        const originalLength = (outputs as unknown[][]).reduce((sum, arr) => sum + arr.length, 0);
         const newLength = filteredOutputs.reduce((sum, arr) => sum + arr.length, 0);
         if (originalLength > newLength) {
           connectionRemoved = true;
@@ -266,14 +270,14 @@ export class N8nRemoveTool {
         const nonEmptyOutputs = filteredOutputs.filter(outputArray => outputArray.length > 0);
 
         if (nonEmptyOutputs.length > 0) {
-          updatedConnections[fromNodeObj.id][outputType] = nonEmptyOutputs;
+          fromConnections[outputType] = nonEmptyOutputs;
         } else {
-          delete updatedConnections[fromNodeObj.id][outputType];
+          delete fromConnections[outputType];
         }
       }
 
       // Remove the node entry if no connections remain
-      if (Object.keys(updatedConnections[fromNodeObj.id]).length === 0) {
+      if (Object.keys(fromConnections).length === 0) {
         delete updatedConnections[fromNodeObj.id];
       }
     }

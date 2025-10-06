@@ -128,18 +128,26 @@ export class N8nConnectTool {
     }
 
     // Create the connection
-    const updatedConnections = { ...workflow.connections };
+    const updatedConnections = { ...workflow.connections } as Record<string, Record<string, unknown[][]>>;
 
     if (!updatedConnections[fromNodeObj.id]) {
       updatedConnections[fromNodeObj.id] = {};
     }
-    if (!updatedConnections[fromNodeObj.id][fromOutput]) {
-      updatedConnections[fromNodeObj.id][fromOutput] = [];
+
+    let fromConnections = updatedConnections[fromNodeObj.id];
+    if (!fromConnections) {
+      fromConnections = {};
+      updatedConnections[fromNodeObj.id] = fromConnections;
+    }
+
+    if (!fromConnections[fromOutput]) {
+      fromConnections[fromOutput] = [];
     }
 
     // Ensure the output array exists at the specified index
-    while (updatedConnections[fromNodeObj.id][fromOutput].length <= fromIndex) {
-      updatedConnections[fromNodeObj.id][fromOutput].push([]);
+    const outputArray = fromConnections[fromOutput] as unknown[][];
+    while (outputArray.length <= fromIndex) {
+      outputArray.push([]);
     }
 
     // Add the connection
@@ -150,25 +158,31 @@ export class N8nConnectTool {
     };
 
     // Check if connection already exists
-    const existingConnections = updatedConnections[fromNodeObj.id][fromOutput][fromIndex];
-    const connectionExists = existingConnections.some(
-      (conn: any) => conn.node === connection.node && conn.type === connection.type && conn.index === connection.index
-    );
+    const existingConnections = outputArray[fromIndex];
+    if (existingConnections) {
+      const connArray = existingConnections as Array<{ node?: string; type?: string; index?: number }>;
+      const connectionExists = connArray.some(
+        (conn) => conn.node === connection.node && conn.type === connection.type && conn.index === connection.index
+      );
 
-    if (connectionExists) {
-      return {
-        success: false,
-        message: `Connection already exists between ${fromNodeObj.name} and ${toNodeObj.name}`,
-        connection: {
-          from: fromNodeObj.name,
-          to: toNodeObj.name,
-          output: fromOutput,
-          input: toInput
-        }
-      };
+      if (connectionExists) {
+        return {
+          success: false,
+          message: `Connection already exists between ${fromNodeObj.name} and ${toNodeObj.name}`,
+          connection: {
+            from: fromNodeObj.name,
+            to: toNodeObj.name,
+            output: fromOutput,
+            input: toInput
+          }
+        };
+      }
     }
 
-    updatedConnections[fromNodeObj.id][fromOutput][fromIndex].push(connection);
+    const targetArray = outputArray[fromIndex];
+    if (targetArray) {
+      (targetArray as unknown[]).push(connection);
+    }
 
     // Update the workflow
     await this.n8nClient.updateWorkflow(workflow.id, {
@@ -219,30 +233,35 @@ export class N8nConnectTool {
     }
 
     // Remove the connection
-    const updatedConnections = { ...workflow.connections };
+    const updatedConnections = { ...workflow.connections } as Record<string, Record<string, unknown[][]>>;
     let connectionRemoved = false;
 
-    if (updatedConnections[fromNodeObj.id] && updatedConnections[fromNodeObj.id][fromOutput]) {
-      const outputConnections = updatedConnections[fromNodeObj.id][fromOutput];
+    const fromConnections = updatedConnections[fromNodeObj.id];
+    if (fromConnections) {
+      const outputConnections = fromConnections[fromOutput];
+      if (outputConnections) {
+        const outputArray = outputConnections as unknown[][];
+        const connectionArray = outputArray[fromIndex];
+        if (connectionArray) {
+          const filteredConnections = connectionArray.filter((conn: unknown) => {
+            const c = conn as { node?: string; type?: string; index?: number };
+            return !(c.node === toNodeObj.id && c.type === toInput && c.index === toIndex);
+          });
 
-      if (outputConnections[fromIndex]) {
-        const filteredConnections = outputConnections[fromIndex].filter((conn: any) =>
-          !(conn.node === toNodeObj.id && conn.type === toInput && conn.index === toIndex)
-        );
+          if (filteredConnections.length < connectionArray.length) {
+            connectionRemoved = true;
+            outputArray[fromIndex] = filteredConnections;
 
-        if (filteredConnections.length < outputConnections[fromIndex].length) {
-          connectionRemoved = true;
-          outputConnections[fromIndex] = filteredConnections;
-
-          // Clean up empty arrays and objects
-          if (filteredConnections.length === 0) {
-            outputConnections.splice(fromIndex, 1);
-          }
-          if (outputConnections.length === 0) {
-            delete updatedConnections[fromNodeObj.id][fromOutput];
-          }
-          if (Object.keys(updatedConnections[fromNodeObj.id]).length === 0) {
-            delete updatedConnections[fromNodeObj.id];
+            // Clean up empty arrays and objects
+            if (filteredConnections.length === 0) {
+              outputArray.splice(fromIndex, 1);
+            }
+            if (outputArray.length === 0) {
+              delete fromConnections[fromOutput];
+            }
+            if (Object.keys(fromConnections).length === 0) {
+              delete updatedConnections[fromNodeObj.id];
+            }
           }
         }
       }

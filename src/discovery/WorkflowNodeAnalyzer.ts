@@ -97,33 +97,34 @@ export class WorkflowNodeAnalyzer {
       existing.usageCount++;
 
       // Add unique parameter configurations
-      const configKey = JSON.stringify(node.parameters);
+      const sanitizedParams = this.sanitizeData(node.parameters);
+      const configKey = JSON.stringify(sanitizedParams);
       const hasConfig = existing.exampleConfigs.some(
-        config => JSON.stringify(config) === configKey
+        config => JSON.stringify(config.parameters) === configKey
       );
 
       if (!hasConfig) {
         existing.exampleConfigs.push({
-          name: node.name,
-          parameters: node.parameters,
+          name: this.sanitizeString(node.name),
+          parameters: sanitizedParams,
           credentials: node.credentials || undefined
         });
       }
     } else {
       // Create new node discovery entry
       const discoveredNode: DiscoveredNodeType = {
-        name: node.name,
+        name: this.sanitizeString(node.name),
         displayName: this.extractDisplayName(node.type),
         type: node.type,
         typeVersion: node.typeVersion,
         category: this.categorizeNode(node.type),
         description: this.generateDescription(node.type),
-        parameters: node.parameters || {},
+        parameters: this.sanitizeData(node.parameters) || {},
         credentials: node.credentials || undefined,
         usageCount: 1,
         exampleConfigs: [{
-          name: node.name,
-          parameters: node.parameters,
+          name: this.sanitizeString(node.name),
+          parameters: this.sanitizeData(node.parameters),
           credentials: node.credentials || undefined
         }],
         isCore: this.isCorNode(node.type),
@@ -132,6 +133,47 @@ export class WorkflowNodeAnalyzer {
 
       this.nodeMap.set(nodeKey, discoveredNode);
     }
+  }
+
+  /**
+   * Sanitize string data to prevent JSON encoding issues
+   */
+  private sanitizeString(str: string): string {
+    if (!str) return str;
+    try {
+      // Normalize to NFC (Canonical Composition) to handle Unicode properly
+      return str.normalize('NFC');
+    } catch (error) {
+      // If normalization fails, remove any potentially problematic characters
+      return str.replace(/[^\x00-\x7F]/g, '');
+    }
+  }
+
+  /**
+   * Recursively sanitize data structures
+   */
+  private sanitizeData(data: any): any {
+    if (data === null || data === undefined) {
+      return data;
+    }
+
+    if (typeof data === 'string') {
+      return this.sanitizeString(data);
+    }
+
+    if (Array.isArray(data)) {
+      return data.map(item => this.sanitizeData(item));
+    }
+
+    if (typeof data === 'object' && data.constructor === Object) {
+      const sanitized: Record<string, any> = {};
+      for (const [key, value] of Object.entries(data)) {
+        sanitized[key] = this.sanitizeData(value);
+      }
+      return sanitized;
+    }
+
+    return data;
   }
 
   /**

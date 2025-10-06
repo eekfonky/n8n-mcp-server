@@ -10,7 +10,7 @@ export interface N8nWorkflow {
   active: boolean;
   tags: string[];
   nodes: N8nNode[];
-  connections: Record<string, any>;
+  connections: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
 }
@@ -21,7 +21,7 @@ export interface N8nNode {
   type: string;
   typeVersion: number;
   position: [number, number];
-  parameters: Record<string, any>;
+  parameters: Record<string, unknown>;
   credentials?: Record<string, string>;
 }
 
@@ -36,7 +36,7 @@ export interface N8nExecution {
   workflowData: N8nWorkflow;
   data?: {
     resultData: {
-      runData: Record<string, any[]>;
+      runData: Record<string, unknown[]>;
     };
   };
 }
@@ -46,7 +46,7 @@ export interface N8nNodeType {
   displayName: string;
   description: string;
   version: number;
-  defaults: Record<string, any>;
+  defaults: Record<string, unknown>;
   inputs: string[];
   outputs: string[];
   properties: N8nNodeProperty[];
@@ -70,17 +70,17 @@ export interface N8nNodeProperty {
   displayName: string;
   name: string;
   type: 'string' | 'number' | 'boolean' | 'options' | 'multiOptions' | 'collection' | 'fixedCollection';
-  default: any;
+  default: unknown;
   description?: string;
   required?: boolean;
   options?: Array<{
     name: string;
-    value: any;
+    value: unknown;
     description?: string;
   }>;
   displayOptions?: {
-    show?: Record<string, any[]>;
-    hide?: Record<string, any[]>;
+    show?: Record<string, unknown[]>;
+    hide?: Record<string, unknown[]>;
   };
 }
 
@@ -88,8 +88,8 @@ export interface N8nCredentialReference {
   name: string;
   required?: boolean;
   displayOptions?: {
-    show?: Record<string, any[]>;
-    hide?: Record<string, any[]>;
+    show?: Record<string, unknown[]>;
+    hide?: Record<string, unknown[]>;
   };
 }
 
@@ -97,7 +97,7 @@ export interface N8nCredential {
   id: string;
   name: string;
   type: string;
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
 }
 
 export interface CacheEntry<T> {

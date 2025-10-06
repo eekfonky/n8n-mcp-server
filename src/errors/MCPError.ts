@@ -2,6 +2,34 @@
  * Custom error classes for the n8n MCP server
  */
 
+/**
+ * Sanitize sensitive data from objects before logging
+ */
+function sanitizeSensitiveData(data: unknown): unknown {
+  if (!data || typeof data !== 'object') {
+    return data;
+  }
+
+  if (Array.isArray(data)) {
+    return data.map(sanitizeSensitiveData);
+  }
+
+  const sensitiveKeys = ['password', 'token', 'key', 'secret', 'credential', 'apikey', 'api_key', 'authorization'];
+  const sanitized: Record<string, unknown> = {};
+
+  for (const [key, value] of Object.entries(data)) {
+    if (sensitiveKeys.some(sensitive => key.toLowerCase().includes(sensitive))) {
+      sanitized[key] = '[REDACTED]';
+    } else if (typeof value === 'object' && value !== null) {
+      sanitized[key] = sanitizeSensitiveData(value);
+    } else {
+      sanitized[key] = value;
+    }
+  }
+
+  return sanitized;
+}
+
 export class MCPError extends Error {
   public readonly code: number;
   public readonly data?: unknown;
@@ -28,7 +56,7 @@ export class MCPError extends Error {
       error: {
         code: this.code,
         message: this.message,
-        data: this.data,
+        data: sanitizeSensitiveData(this.data),
       },
     };
   }

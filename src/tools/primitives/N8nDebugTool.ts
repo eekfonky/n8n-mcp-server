@@ -399,7 +399,7 @@ export class N8nDebugTool {
 
       trace.nodeTrace = executionOrder.map(nodeId => {
         const node = nodes.find((n: any) => n.name === nodeId);
-        const nodeRunData = runData[nodeId]?.[0];
+        const nodeRunData = runData[nodeId]?.[0] as any;
 
         const nodeTrace: any = {
           nodeId,
@@ -583,8 +583,10 @@ export class N8nDebugTool {
           message: `Node ${nodeId} executed in first execution but not in second`
         });
       } else if (node1 && node2) {
-        const items1 = node1[0]?.data?.main?.[0]?.length || 0;
-        const items2 = node2[0]?.data?.main?.[0]?.length || 0;
+        const n1 = node1[0] as any;
+        const n2 = node2[0] as any;
+        const items1 = n1?.data?.main?.[0]?.length || 0;
+        const items2 = n2?.data?.main?.[0]?.length || 0;
 
         if (items1 !== items2) {
           comparison.differences.push({
@@ -595,14 +597,14 @@ export class N8nDebugTool {
           });
         }
 
-        if (!!node1[0]?.error !== !!node2[0]?.error) {
+        if (!!n1?.error !== !!n2?.error) {
           comparison.differences.push({
             type: 'different_error_status',
             nodeId,
             message: `Node ${nodeId} error status differs between executions`,
             values: {
-              first: node1[0]?.error ? 'error' : 'success',
-              second: node2[0]?.error ? 'error' : 'success'
+              first: n1?.error ? 'error' : 'success',
+              second: n2?.error ? 'error' : 'success'
             }
           });
         }

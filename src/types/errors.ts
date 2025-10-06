@@ -5,14 +5,14 @@
 
 export class N8nMcpError extends Error {
   public readonly code: string;
-  public readonly context: Record<string, any>;
+  public readonly context: Record<string, unknown>;
   public readonly timestamp: string;
   public readonly originalError: Error | undefined;
 
   constructor(
     message: string,
     code: string = 'UNKNOWN_ERROR',
-    context: Record<string, any> = {},
+    context: Record<string, unknown> = {},
     originalError?: Error
   ) {
     super(message);
@@ -33,11 +33,26 @@ export class N8nMcpError extends Error {
       name: this.name,
       message: this.message,
       code: this.code,
-      context: this.context,
+      context: N8nMcpError.sanitizeContext(this.context),
       timestamp: this.timestamp,
       stack: this.stack,
       originalError: this.originalError?.message
     };
+  }
+
+  static sanitizeContext(context: Record<string, unknown>): Record<string, unknown> {
+    const sensitiveKeys = ['password', 'token', 'key', 'secret', 'credential', 'apikey', 'api_key', 'authorization'];
+    const sanitized = { ...context };
+
+    for (const [key, value] of Object.entries(sanitized)) {
+      if (sensitiveKeys.some(sensitive => key.toLowerCase().includes(sensitive))) {
+        sanitized[key] = '[REDACTED]';
+      } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+        sanitized[key] = N8nMcpError.sanitizeContext(value as Record<string, unknown>);
+      }
+    }
+
+    return sanitized;
   }
 }
 
@@ -49,7 +64,7 @@ export class N8nApiError extends N8nMcpError {
     message: string,
     statusCode?: number,
     endpoint?: string,
-    context: Record<string, any> = {},
+    context: Record<string, unknown> = {},
     originalError?: Error
   ) {
     super(message, 'N8N_API_ERROR', context, originalError);
@@ -60,13 +75,13 @@ export class N8nApiError extends N8nMcpError {
 
 export class ValidationError extends N8nMcpError {
   public readonly field: string | undefined;
-  public readonly value: any;
+  public readonly value: unknown;
 
   constructor(
     message: string,
     field?: string,
-    value?: any,
-    context: Record<string, any> = {}
+    value?: unknown,
+    context: Record<string, unknown> = {}
   ) {
     super(message, 'VALIDATION_ERROR', context);
     this.field = field;
@@ -204,13 +219,13 @@ export class ErrorHandler {
     });
   }
 
-  static createErrorResponse(error: Error): { success: false; error: string; code?: string; context?: any } {
+  static createErrorResponse(error: Error): { success: false; error: string; code?: string; context?: unknown } {
     if (error instanceof N8nMcpError) {
       return {
         success: false,
         error: error.message,
         code: error.code,
-        context: error.context
+        context: N8nMcpError.sanitizeContext(error.context)
       };
     }
 
@@ -218,21 +233,6 @@ export class ErrorHandler {
       success: false,
       error: error.message || 'Unknown error occurred'
     };
-  }
-
-  static sanitizeContext(context: Record<string, any>): Record<string, any> {
-    const sensitiveKeys = ['password', 'token', 'key', 'secret', 'credential', 'apiKey'];
-    const sanitized = { ...context };
-
-    for (const [key, value] of Object.entries(sanitized)) {
-      if (sensitiveKeys.some(sensitive => key.toLowerCase().includes(sensitive))) {
-        sanitized[key] = '[REDACTED]';
-      } else if (typeof value === 'object' && value !== null) {
-        sanitized[key] = this.sanitizeContext(value);
-      }
-    }
-
-    return sanitized;
   }
 }
 
