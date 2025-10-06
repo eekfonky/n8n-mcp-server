@@ -95,12 +95,12 @@ setup_secrets() {
 
     # Prompt for n8n URL
     if [ -z "$N8N_BASE_URL" ]; then
-        read -p "Enter your n8n instance URL (e.g., https://your-n8n.com): " N8N_BASE_URL
+        read -p "Enter your n8n instance URL (e.g., https://your-n8n.com): " N8N_BASE_URL < /dev/tty
     fi
 
     # Prompt for API key
     if [ -z "$N8N_API_KEY" ]; then
-        read -s -p "Enter your n8n API key: " N8N_API_KEY
+        read -s -p "Enter your n8n API key: " N8N_API_KEY < /dev/tty
         echo ""
     fi
 
