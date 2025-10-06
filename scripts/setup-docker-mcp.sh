@@ -2,6 +2,7 @@
 
 # n8n MCP Server - Docker MCP Toolkit Setup Script
 # Installs n8n MCP server via Docker Desktop's MCP Toolkit
+# Updated: 2025-10-06 - Fixed Docker MCP HTTPS URL fetching issue
 
 set -e
 
