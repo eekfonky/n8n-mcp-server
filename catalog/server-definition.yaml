@@ -1,0 +1,89 @@
+version: 2
+name: n8n-mcp-catalog
+displayName: n8n MCP Server Catalog
+registry:
+  n8n-server:
+    description: "Enterprise-grade n8n workflow automation MCP server with 15 powerful primitive tools for complete workflow management"
+    title: "n8n Workflow Automation"
+    type: "server"
+    dateAdded: "2025-10-02T00:00:00Z"
+    image: "eekfonky/n8n-mcp-server:latest"
+    ref: ""
+
+    # All 15 primitive tools provided by the server
+    tools:
+      - name: "n8n_discover"
+      - name: "n8n_create"
+      - name: "n8n_execute"
+      - name: "n8n_inspect"
+      - name: "n8n_remove"
+      - name: "n8n_modify"
+      - name: "n8n_connect"
+      - name: "n8n_control"
+      - name: "n8n_search"
+      - name: "n8n_validate"
+      - name: "n8n_monitor"
+      - name: "n8n_debug"
+      - name: "n8n_template"
+      - name: "n8n_batch"
+      - name: "n8n_export"
+
+    # Required secrets for n8n API connection
+    secrets:
+      - name: "n8n-server.api_key"
+        env: "N8N_API_KEY"
+        example: "your-n8n-api-key"
+      - name: "n8n-server.base_url"
+        env: "N8N_BASE_URL"
+        example: "https://your-n8n-instance.com"
+
+    # Environment variables
+    env:
+      - name: "MCP_SERVER_NAME"
+        value: "n8n-mcp-server"
+      - name: "MCP_SERVER_VERSION"
+        value: "1.0.0"
+      - name: "LOG_LEVEL"
+        value: "{{n8n-server.log_level}}"
+      - name: "RATE_LIMIT_REQUESTS_PER_MINUTE"
+        value: "{{n8n-server.rate_limit}}"
+      - name: "CACHE_TTL_SECONDS"
+        value: "{{n8n-server.cache_ttl}}"
+      - name: "DEBUG"
+        value: "{{n8n-server.debug}}"
+
+    # Command line arguments for MCP server
+    command:
+      - "node"
+      - "dist/index.js"
+
+    # Configuration schema for user customization
+    config:
+      - name: "n8n-server"
+        description: "n8n MCP Server Configuration"
+        type: "object"
+        properties:
+          log_level:
+            type: "string"
+            description: "Logging level (error, warn, info, debug)"
+            default: "info"
+          rate_limit:
+            type: "string"
+            description: "API requests per minute limit"
+            default: "60"
+          cache_ttl:
+            type: "string"
+            description: "Cache TTL in seconds"
+            default: "300"
+          debug:
+            type: "string"
+            description: "Enable debug mode"
+            default: "false"
+        required: []
+
+    # Metadata for catalog organization
+    metadata:
+      category: "automation"
+      tags: ["workflow", "automation", "n8n", "integration", "api", "enterprise"]
+      license: "MIT License"
+      owner: "eekfonky"
