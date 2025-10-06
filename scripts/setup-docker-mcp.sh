@@ -65,9 +65,24 @@ setup_catalog() {
     if [ -f "catalog/server-definition.yaml" ]; then
         SERVER_DEF_URL="./catalog/server-definition.yaml"
         echo "Using local server definition file"
+    else
+        # Docker MCP has issues with HTTPS URLs, so download locally first
+        TEMP_FILE=$(mktemp)
+        if curl -s "$SERVER_DEF_URL" -o "$TEMP_FILE"; then
+            SERVER_DEF_URL="$TEMP_FILE"
+            echo "Downloaded server definition file"
+        else
+            echo "❌ Error: Failed to download server definition from $SERVER_DEF_URL"
+            exit 1
+        fi
     fi
 
     docker mcp catalog add n8n-mcp-catalog n8n-server "$SERVER_DEF_URL"
+
+    # Clean up temp file if created
+    if [[ "$SERVER_DEF_URL" == /tmp/* ]]; then
+        rm -f "$SERVER_DEF_URL"
+    fi
     echo "✅ n8n MCP Server added to catalog successfully"
 }
 
