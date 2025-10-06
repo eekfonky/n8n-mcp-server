@@ -78,13 +78,13 @@ setup_catalog() {
         fi
     fi
 
-    docker mcp catalog add n8n-mcp-catalog n8n-server "$SERVER_DEF_URL"
+    docker mcp catalog add n8n-mcp-catalog n8n-server "$SERVER_DEF_URL" || echo "ℹ️  Server already exists in catalog"
 
     # Clean up temp file if created
     if [[ "$SERVER_DEF_URL" == /tmp/* ]]; then
         rm -f "$SERVER_DEF_URL"
     fi
-    echo "✅ n8n MCP Server added to catalog successfully"
+    echo "✅ n8n MCP Server catalog setup complete"
 }
 
 # Set up secrets
