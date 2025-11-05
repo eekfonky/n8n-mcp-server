@@ -1,114 +1,90 @@
-export interface N8nConfig {
-  baseUrl: string;
-  apiKey: string;
-  timeout?: number;
-}
+/**
+ * Essential type definitions for n8n MCP server
+ */
 
+// Workflow types
 export interface N8nWorkflow {
   id: string;
   name: string;
   active: boolean;
-  tags: string[];
   nodes: N8nNode[];
-  connections: Record<string, unknown>;
-  createdAt: string;
-  updatedAt: string;
+  connections: Record<string, any>;
+  settings?: Record<string, any>;
+  tags?: string[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface N8nNode {
   id: string;
   name: string;
   type: string;
-  typeVersion: number;
+  typeVersion?: number;
   position: [number, number];
-  parameters: Record<string, unknown>;
-  credentials?: Record<string, string>;
+  parameters: Record<string, any>;
+  credentials?: Record<string, any>;
+  disabled?: boolean;
 }
 
+// Execution types
 export interface N8nExecution {
   id: string;
   finished: boolean;
   mode: string;
-  retryOf?: string;
-  retrySuccessId?: string;
   startedAt: string;
   stoppedAt?: string;
-  workflowData: N8nWorkflow;
+  workflowId?: string;
+  workflowData?: N8nWorkflow;
   data?: {
     resultData: {
-      runData: Record<string, unknown[]>;
+      runData: Record<string, any[]>;
     };
   };
 }
 
+// Node type definitions
 export interface N8nNodeType {
   name: string;
   displayName: string;
   description: string;
   version: number;
-  defaults: Record<string, unknown>;
+  defaults: Record<string, any>;
   inputs: string[];
   outputs: string[];
   properties: N8nNodeProperty[];
   credentials?: N8nCredentialReference[];
-  icon?: string;
-  iconUrl?: string;
   group: string[];
-  subtitle?: string;
-  codex?: {
-    categories?: string[];
-    subcategories?: Record<string, string[]>;
-    resources?: {
-      primaryDocumentation?: Array<{
-        url: string;
-      }>;
-    };
-  };
+  icon?: string;
 }
 
 export interface N8nNodeProperty {
   displayName: string;
   name: string;
-  type: 'string' | 'number' | 'boolean' | 'options' | 'multiOptions' | 'collection' | 'fixedCollection';
-  default: unknown;
-  description?: string;
+  type: string;
+  default: any;
   required?: boolean;
-  options?: Array<{
-    name: string;
-    value: unknown;
-    description?: string;
-  }>;
-  displayOptions?: {
-    show?: Record<string, unknown[]>;
-    hide?: Record<string, unknown[]>;
-  };
+  description?: string;
+  options?: Array<{ name: string; value: any }>;
 }
 
 export interface N8nCredentialReference {
   name: string;
   required?: boolean;
-  displayOptions?: {
-    show?: Record<string, unknown[]>;
-    hide?: Record<string, unknown[]>;
-  };
 }
 
+// Credential types
 export interface N8nCredential {
   id: string;
   name: string;
   type: string;
-  data?: Record<string, unknown>;
+  data?: Record<string, any>;
 }
 
-export interface CacheEntry<T> {
-  data: T;
-  timestamp: number;
-  ttl: number;
-}
-
-export interface RateLimiter {
-  requests: number;
-  windowStart: number;
-  windowSize: number;
-  maxRequests: number;
+// MCP Tool result helper
+export interface ToolResult {
+  content: Array<{
+    type: 'text';
+    text: string;
+  }>;
+  isError?: boolean;
 }
