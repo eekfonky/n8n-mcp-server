@@ -1,6 +1,57 @@
 # n8n MCP Server (Minimal Edition)
 
-A lightweight, focused Model Context Protocol (MCP) server for n8n workflow automation. Designed for AI assistants like Claude Code and Gemini CLI.
+A lightweight Model Context Protocol (MCP) server for n8n workflow automation. Built for AI assistants like Claude Code and Claude Desktop.
+
+[![npm version](https://img.shields.io/npm/v/n8n-mcp-server.svg)](https://www.npmjs.com/package/n8n-mcp-server)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+## 🚀 Quick Start
+
+### For Claude Code
+
+Install with a single command:
+
+```bash
+claude mcp add --transport stdio n8n \
+  --env N8N_BASE_URL=http://localhost:5678 \
+  --env N8N_API_KEY=your_api_key_here \
+  -- npx -y n8n-mcp-server
+```
+
+**That's it!** You can now ask Claude to:
+- "Show me all my n8n workflows"
+- "Create a new workflow called 'Daily Report'"
+- "Execute the 'Send Email' workflow"
+- "What's in my Customer Service workflow?"
+
+### For Claude Desktop
+
+Add to your `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "n8n": {
+      "command": "npx",
+      "args": ["-y", "n8n-mcp-server"],
+      "env": {
+        "N8N_BASE_URL": "http://localhost:5678",
+        "N8N_API_KEY": "your_api_key_here"
+      }
+    }
+  }
+}
+```
+
+**Config file locations:**
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows**: `%APPDATA%/Claude/claude_desktop_config.json`
+
+## 📋 Prerequisites
+
+- **Node.js 18+** or **Node.js 24+** (recommended)
+- **n8n instance** with API access enabled
+- **n8n API Key** ([How to create an API key](https://docs.n8n.io/api/authentication/))
 
 ## 🎯 Design Philosophy
 
@@ -9,7 +60,7 @@ A lightweight, focused Model Context Protocol (MCP) server for n8n workflow auto
 - **Zero bloat** - Just 3 production dependencies
 - **5 core tools** - Essential workflow operations only
 - **Lazy loading** - Tools load on-demand for faster startup
-- **Modern Node.js** - Built for Node.js 24+
+- **Modern Node.js** - Built for Node.js 18+ and 24+
 
 ## ✨ Features
 
@@ -51,18 +102,123 @@ src/
 - `tsx` - Development runner
 - `typescript` - TypeScript compiler
 
-## 🚀 Quick Start
+## 📖 Usage Examples
 
-### Prerequisites
+Once installed, you can interact with n8n naturally through Claude:
 
-- Node.js 24 or higher
-- n8n instance with API access enabled
-- n8n API key
+### Discover Workflows
+```
+> "What workflows do I have?"
+> "Show me all executions from today"
+> "List available n8n node types"
+```
 
-### Installation
+### Create Workflows
+```
+> "Create a new workflow called 'Customer Onboarding'"
+> "Add an HTTP Request node to the Sales workflow"
+```
+
+### Execute Workflows
+```
+> "Run the 'Daily Backup' workflow"
+> "Execute workflow 'Send Newsletter' with test data"
+```
+
+### Inspect & Debug
+```
+> "Show me details of the 'Data Sync' workflow"
+> "What happened in execution abc123?"
+> "Get the schema of my Customer workflow"
+```
+
+### Manage Workflows
+```
+> "Delete the 'Old Test' workflow"
+> "Remove the broken node from my workflow"
+```
+
+## 🔧 Configuration Options
+
+### Environment Variables
+
+| Variable | Required | Description | Example |
+|----------|----------|-------------|---------|
+| `N8N_BASE_URL` | Yes | Your n8n instance URL | `http://localhost:5678` |
+| `N8N_API_KEY` | Yes | n8n API key | `n8n_api_...` |
+| `DEBUG` | No | Enable debug logging | `true` |
+
+### Advanced Installation
+
+**Project-scoped** (shared with team via git):
+```bash
+claude mcp add --transport stdio n8n --scope project \
+  --env N8N_BASE_URL=http://localhost:5678 \
+  --env N8N_API_KEY=your_api_key_here \
+  -- npx -y n8n-mcp-server
+```
+
+**User-scoped** (available across all your projects):
+```bash
+claude mcp add --transport stdio n8n --scope user \
+  --env N8N_BASE_URL=http://localhost:5678 \
+  --env N8N_API_KEY=your_api_key_here \
+  -- npx -y n8n-mcp-server
+```
+
+### Managing the Server
 
 ```bash
-# Clone repository
+# List all MCP servers
+claude mcp list
+
+# Get server details
+claude mcp get n8n
+
+# Remove the server
+claude mcp remove n8n
+
+# Check server status (within Claude Code)
+/mcp
+```
+
+## 🔒 Security Best Practices
+
+1. **Never commit API keys** - Use environment variables or local scope
+2. **Use read-only API keys** - Create keys with minimal permissions for testing
+3. **Secure your n8n instance** - Use HTTPS for production n8n instances
+4. **Review workflows** - Always review AI-generated workflows before activating
+
+## 📊 Comparison: v1 vs v2
+
+| Metric | v1.x | v2.0 | Change |
+|--------|------|------|--------|
+| Lines of Code | 13,165 | 1,062 | **-91.9%** |
+| Production Dependencies | 6 | 3 | **-50%** |
+| Tools | 15 | 5 | **-66%** |
+| Startup Time | ~200ms | ~50ms | **-75%** |
+| Disk Size (dist) | ~3MB | ~952KB | **-68%** |
+| Node.js Version | 18+ | 18-24+ | ✅ |
+
+## 🎯 What Was Removed from v1
+
+To achieve this reduction, we removed:
+- ❌ 10 advanced tools (monitoring, debugging, templates, batch operations)
+- ❌ Node discovery service
+- ❌ Caching layer
+- ❌ Health check service
+- ❌ Gateway/HTTP transport mode (stdio only)
+- ❌ Complex service factory pattern
+- ❌ Extensive error catalog
+- ❌ Rate limiting
+- ❌ Test infrastructure from source
+
+## 🛠️ Development
+
+### Local Development
+
+```bash
+# Clone the repository
 git clone https://github.com/eekfonky/n8n-mcp-server.git
 cd n8n-mcp-server
 
@@ -71,37 +227,53 @@ npm install
 
 # Build
 npm run build
+
+# Development mode (with auto-reload)
+npm run dev
+
+# Type check
+npm run typecheck
+
+# Clean build artifacts
+npm run clean
 ```
 
-### Configuration
+### Testing Locally
 
 Create a `.env` file:
 
 ```env
 N8N_BASE_URL=http://localhost:5678
 N8N_API_KEY=your_api_key_here
+DEBUG=true
 ```
 
-### Usage with Claude Desktop
+Run the server:
 
-Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json`):
-
-```json
-{
-  "mcpServers": {
-    "n8n": {
-      "command": "node",
-      "args": ["/path/to/n8n-mcp-server/dist/index.js"],
-      "env": {
-        "N8N_BASE_URL": "http://localhost:5678",
-        "N8N_API_KEY": "your_api_key_here"
-      }
-    }
-  }
-}
+```bash
+npm start
 ```
 
-### Docker Usage
+## 📝 MCP Best Practices Implemented
+
+This server follows official MCP SDK and n8n API best practices:
+
+**MCP SDK Best Practices:**
+- ✅ Server class with setRequestHandler (current MCP SDK pattern)
+- ✅ Structured error responses with text and structured content
+- ✅ Connection cleanup handlers for graceful shutdown
+- ✅ Lazy-loaded tools to minimize startup time
+- ✅ StdioServerTransport for subprocess communication
+- ✅ JSON Schema compliant tool definitions
+
+**n8n API Best Practices:**
+- ✅ X-N8N-API-KEY header authentication
+- ✅ Proper HTTP status code handling (401, 403, 404, 429)
+- ✅ Rate limit detection with Retry-After header support
+- ✅ 30-second request timeout (recommended)
+- ✅ Content-Type and Accept headers
+
+## 🚢 Docker Deployment
 
 ```bash
 # Build image
@@ -114,130 +286,76 @@ docker run -i --rm \
   n8n-mcp-server
 ```
 
-## 📖 Tool Examples
-
-### Discover Workflows
-
-```typescript
-{
-  "name": "n8n_discover",
-  "arguments": {
-    "type": "workflows"
-  }
-}
-```
-
-### Create Workflow
-
-```typescript
-{
-  "name": "n8n_create",
-  "arguments": {
-    "type": "workflow",
-    "name": "My New Workflow"
-  }
-}
-```
-
-### Execute Workflow
-
-```typescript
-{
-  "name": "n8n_execute",
-  "arguments": {
-    "workflowId": "workflow-id-or-name",
-    "data": {
-      "input": "test data"
-    },
-    "wait": true
-  }
-}
-```
-
-### Inspect Workflow
-
-```typescript
-{
-  "name": "n8n_inspect",
-  "arguments": {
-    "type": "workflow",
-    "id": "workflow-id-or-name"
-  }
-}
-```
-
-### Remove Workflow
-
-```typescript
-{
-  "name": "n8n_remove",
-  "arguments": {
-    "type": "workflow",
-    "id": "workflow-id-or-name"
-  }
-}
-```
-
-## 🔧 Development
-
-```bash
-# Development mode (with auto-reload)
-npm run dev
-
-# Type check
-npm run typecheck
-
-# Build
-npm run build
-
-# Clean build artifacts
-npm run clean
-```
-
-## 📊 Comparison: v1 vs v2
-
-| Metric | v1.x | v2.0 | Change |
-|--------|------|------|--------|
-| Lines of Code | 13,165 | 1,062 | **-91.9%** |
-| Production Dependencies | 6 | 3 | **-50%** |
-| Tools | 15 | 5 | **-66%** |
-| Startup Time | ~200ms | ~50ms | **-75%** |
-| Disk Size (dist) | ~3MB | ~952KB | **-68%** |
-| Complexity | High | Minimal | ✅ |
-
-## 🎯 What Was Removed
-
-To achieve this reduction, we removed:
-- ❌ 10 advanced tools (monitoring, debugging, templates, batch operations, etc.)
-- ❌ Node discovery service
-- ❌ Caching layer
-- ❌ Health check service
-- ❌ Gateway/HTTP transport mode (stdio only)
-- ❌ Complex service factory pattern
-- ❌ Extensive error catalog
-- ❌ Rate limiting
-- ❌ Test infrastructure from source
+**Note:** Use `host.docker.internal` to connect to n8n running on the host machine.
 
 ## 📝 Migration from v1
 
-If you're using v1 and need advanced features, you have two options:
+If you're using v1 and need advanced features:
 
-1. **Stay on v1** - If you use advanced tools (monitoring, templates, batch), stick with v1.x
-2. **Upgrade to v2** - If you only use basic workflow operations, v2 is faster and lighter
+1. **Stay on v1** - If you use monitoring, templates, or batch operations
+2. **Upgrade to v2** - If you only need basic workflow operations
+
+v2 is faster, lighter, and covers 90% of use cases with 5 core tools.
 
 ## 🤝 Contributing
 
 This is a minimal, focused implementation. Feature requests should align with the "minimal footprint" philosophy.
 
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
 ## 📄 License
 
-MIT
+MIT License - see [LICENSE](LICENSE) file for details
 
 ## 🔗 Links
 
+- [GitHub Repository](https://github.com/eekfonky/n8n-mcp-server)
+- [npm Package](https://www.npmjs.com/package/n8n-mcp-server)
 - [n8n Documentation](https://docs.n8n.io/)
-- [Model Context Protocol Specification](https://modelcontextprotocol.io/)
-- [Claude Desktop](https://claude.ai/desktop)
+- [Model Context Protocol](https://modelcontextprotocol.io/)
+- [Claude Code Documentation](https://docs.claude.com/claude-code)
+
+## 🐛 Troubleshooting
+
+### Server won't start
+
+**Error: "Invalid n8n API key"**
+- Verify your API key is correct
+- Check that API access is enabled in n8n settings
+
+**Error: "n8n resource not found"**
+- Ensure N8N_BASE_URL is correct
+- Verify n8n is running and accessible
+
+### Connection issues
+
+**"Connection closed" errors**
+- Check your n8n instance is reachable
+- Verify firewall/network settings
+- Try using `http://localhost:5678` instead of `http://127.0.0.1:5678`
+
+### Rate limiting
+
+If you see rate limit errors:
+- n8n may be limiting API requests
+- Wait a few seconds and try again
+- Check n8n logs for rate limit configuration
+
+### Debug mode
+
+Enable debug logging to see detailed information:
+
+```bash
+claude mcp add --transport stdio n8n \
+  --env N8N_BASE_URL=http://localhost:5678 \
+  --env N8N_API_KEY=your_api_key_here \
+  --env DEBUG=true \
+  -- npx -y n8n-mcp-server
+```
 
 ---
 
