@@ -1,6 +1,6 @@
 # n8n MCP Server (Minimal Edition)
 
-A lightweight Model Context Protocol (MCP) server for n8n workflow automation. Built for AI assistants like Claude Code and Claude Desktop.
+A lightweight Model Context Protocol (MCP) server for n8n workflow automation. Built for AI assistants like Claude Code, Claude Desktop, and Gemini CLI.
 
 [![npm version](https://img.shields.io/npm/v/n8n-mcp-server.svg)](https://www.npmjs.com/package/n8n-mcp-server)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -24,6 +24,29 @@ claude mcp add --transport stdio n8n \
 - "Execute the 'Send Email' workflow"
 - "What's in my Customer Service workflow?"
 
+### For Gemini CLI
+
+Install with a single command:
+
+```bash
+gemini mcp add n8n \
+  -e N8N_BASE_URL=http://localhost:5678 \
+  -e N8N_API_KEY=your_api_key_here \
+  npx -y n8n-mcp-server
+```
+
+**Now you can use it with Gemini:**
+- "> @n8n List all my workflows"
+- "> @n8n Create a workflow called 'Sales Pipeline'"
+- "> @n8n Execute the Customer Onboarding workflow"
+- "> @n8n Show me execution details for abc123"
+
+**Manage your server:**
+```bash
+gemini mcp list          # List all servers
+gemini mcp remove n8n    # Remove the server
+```
+
 ### For Claude Desktop
 
 Add to your `claude_desktop_config.json`:
@@ -46,6 +69,25 @@ Add to your `claude_desktop_config.json`:
 **Config file locations:**
 - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
 - **Windows**: `%APPDATA%/Claude/claude_desktop_config.json`
+
+### For Manual Configuration (Any MCP Client)
+
+Add to your MCP client's `settings.json` or config file:
+
+```json
+{
+  "mcpServers": {
+    "n8n": {
+      "command": "npx",
+      "args": ["-y", "n8n-mcp-server"],
+      "env": {
+        "N8N_BASE_URL": "http://localhost:5678",
+        "N8N_API_KEY": "your_api_key_here"
+      }
+    }
+  }
+}
+```
 
 ## 📋 Prerequisites
 
@@ -150,7 +192,7 @@ Once installed, you can interact with n8n naturally through Claude:
 
 ### Advanced Installation
 
-**Project-scoped** (shared with team via git):
+**Claude Code - Project scope** (shared with team via git):
 ```bash
 claude mcp add --transport stdio n8n --scope project \
   --env N8N_BASE_URL=http://localhost:5678 \
@@ -158,7 +200,7 @@ claude mcp add --transport stdio n8n --scope project \
   -- npx -y n8n-mcp-server
 ```
 
-**User-scoped** (available across all your projects):
+**Claude Code - User scope** (available across all your projects):
 ```bash
 claude mcp add --transport stdio n8n --scope user \
   --env N8N_BASE_URL=http://localhost:5678 \
@@ -166,8 +208,27 @@ claude mcp add --transport stdio n8n --scope user \
   -- npx -y n8n-mcp-server
 ```
 
+**Gemini CLI - With custom options:**
+```bash
+# With timeout and trust settings
+gemini mcp add n8n \
+  -e N8N_BASE_URL=http://localhost:5678 \
+  -e N8N_API_KEY=your_api_key_here \
+  --timeout 60000 \
+  --trust \
+  npx -y n8n-mcp-server
+
+# With description
+gemini mcp add n8n \
+  -e N8N_BASE_URL=http://localhost:5678 \
+  -e N8N_API_KEY=your_api_key_here \
+  --description "n8n workflow automation" \
+  npx -y n8n-mcp-server
+```
+
 ### Managing the Server
 
+**Claude Code:**
 ```bash
 # List all MCP servers
 claude mcp list
@@ -179,6 +240,18 @@ claude mcp get n8n
 claude mcp remove n8n
 
 # Check server status (within Claude Code)
+/mcp
+```
+
+**Gemini CLI:**
+```bash
+# List all MCP servers
+gemini mcp list
+
+# Remove the server
+gemini mcp remove n8n
+
+# Check server status (within Gemini CLI)
 /mcp
 ```
 

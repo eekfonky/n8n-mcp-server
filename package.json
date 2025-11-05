@@ -29,8 +29,13 @@
     "ai",
     "claude",
     "claude-code",
+    "claude-desktop",
+    "gemini",
+    "gemini-cli",
+    "google-gemini",
     "llm",
-    "agent"
+    "agent",
+    "ai-tools"
   ],
   "author": "eekfonky",
   "license": "MIT",
