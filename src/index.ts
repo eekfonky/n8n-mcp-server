@@ -1,8 +1,34 @@
 #!/usr/bin/env node
 
 /**
- * Minimal n8n MCP Server
- * Lightweight server with 5 core tools and lazy loading
+ * Minimal n8n MCP Server v2.0.0
+ *
+ * A lightweight Model Context Protocol server for n8n workflow automation.
+ * Built following current MCP SDK and n8n API best practices.
+ *
+ * MCP Best Practices Implemented:
+ * - Uses Server class with setRequestHandler (current MCP SDK pattern)
+ * - Structured error responses with both text and structured content
+ * - Connection cleanup handlers for graceful shutdown
+ * - Lazy-loaded tools to minimize startup time
+ * - StdioServerTransport for subprocess communication
+ * - Proper error handling with MCP error types
+ *
+ * n8n API Best Practices Implemented:
+ * - X-N8N-API-KEY header authentication
+ * - Proper HTTP status code handling (401, 403, 404, 429)
+ * - Rate limit detection with Retry-After header support
+ * - 30-second request timeout (recommended)
+ * - Content-Type and Accept headers
+ *
+ * Architecture:
+ * - 5 core tools: discover, create, execute, inspect, remove
+ * - Lazy loading: Tools loaded on first use for faster startup
+ * - Minimal dependencies: Only MCP SDK, axios, and dotenv
+ * - Type-safe: Full TypeScript with strict mode
+ *
+ * @see https://github.com/modelcontextprotocol/typescript-sdk
+ * @see https://docs.n8n.io/api/
  */
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
@@ -133,27 +159,44 @@ server.onerror = (error) => {
 // Start server
 async function main() {
   const transport = new StdioServerTransport();
+
+  // Connection cleanup handler (MCP best practice)
+  transport.onclose = async () => {
+    if (process.env.DEBUG === 'true') {
+      console.error('Connection closed, cleaning up...');
+    }
+  };
+
   await server.connect(transport);
 
   if (process.env.DEBUG === 'true') {
-    console.error('n8n MCP Server running on stdio');
+    console.error('n8n MCP Server v2.0.0 running on stdio');
+    console.error('Connected to n8n:', N8N_BASE_URL);
   }
 }
 
-// Graceful shutdown
-process.on('SIGINT', async () => {
-  if (process.env.DEBUG === 'true') {
-    console.error('\nShutting down gracefully...');
-  }
-  process.exit(0);
-});
+// Graceful shutdown handler
+let isShuttingDown = false;
+async function shutdown(signal: string) {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
 
-process.on('SIGTERM', async () => {
   if (process.env.DEBUG === 'true') {
-    console.error('\nShutting down gracefully...');
+    console.error(`\nReceived ${signal}, shutting down gracefully...`);
   }
+
+  try {
+    // Give time for any in-flight requests to complete
+    await new Promise(resolve => setTimeout(resolve, 100));
+  } catch (error) {
+    console.error('Error during shutdown:', error);
+  }
+
   process.exit(0);
-});
+}
+
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => shutdown('SIGTERM'));
 
 // Run
 main().catch((error) => {
