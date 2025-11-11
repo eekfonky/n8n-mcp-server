@@ -5,31 +5,26 @@ displayName: n8n MCP Server Catalog
 registry:
   n8n-server:
     description: >
-      Enterprise-grade n8n workflow automation MCP server with 15 powerful
-      primitive tools for complete workflow management
-    title: "n8n Workflow Automation"
+      Minimal n8n workflow automation MCP server v2.0 with 5 core
+      tools for essential workflow management (91.9% code reduction from v1)
+    title: "n8n Workflow Automation (Minimal v2)"
     type: "server"
     dateAdded: "2025-10-02T00:00:00Z"
     image: "eekfonky/n8n-mcp-server:latest"
     ref: ""
 
-    # All 15 primitive tools provided by the server
+    # All 5 core tools provided by v2.0 server
     tools:
       - name: "n8n_discover"
+        description: "Discover workflows, node types, executions, and credentials"
       - name: "n8n_create"
+        description: "Create new workflows or add nodes to existing workflows"
       - name: "n8n_execute"
+        description: "Execute workflows manually with optional input data"
       - name: "n8n_inspect"
+        description: "Get detailed information about workflows, executions, or nodes"
       - name: "n8n_remove"
-      - name: "n8n_modify"
-      - name: "n8n_connect"
-      - name: "n8n_control"
-      - name: "n8n_search"
-      - name: "n8n_validate"
-      - name: "n8n_monitor"
-      - name: "n8n_debug"
-      - name: "n8n_template"
-      - name: "n8n_batch"
-      - name: "n8n_export"
+        description: "Delete workflows or remove nodes from workflows"
 
     # Required secrets for n8n API connection
     secrets:
@@ -45,7 +40,7 @@ registry:
       - name: "MCP_SERVER_NAME"
         value: "n8n-mcp-server"
       - name: "MCP_SERVER_VERSION"
-        value: "1.0.0"
+        value: "2.0.0"
       - name: "LOG_LEVEL"
         value: "{{n8n-server.log_level}}"
       - name: "RATE_LIMIT_REQUESTS_PER_MINUTE"
@@ -88,6 +83,6 @@ registry:
     metadata:
       category: "automation"
       tags:
-        ["workflow", "automation", "n8n", "integration", "api", "enterprise"]
+        ["workflow", "automation", "n8n", "integration", "api", "minimal", "lightweight"]
       license: "MIT License"
       owner: "eekfonky"
