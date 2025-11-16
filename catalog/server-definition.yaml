@@ -5,31 +5,26 @@ displayName: n8n MCP Server Catalog
 registry:
   n8n-server:
     description: >
-      Enterprise-grade n8n workflow automation MCP server with 15 powerful
-      primitive tools for complete workflow management
+      Minimal n8n workflow automation MCP server v2.0 with 5 core
+      tools for essential workflow management (discover, create, execute, inspect, remove)
     title: "n8n Workflow Automation"
     type: "server"
     dateAdded: "2025-10-02T00:00:00Z"
     image: "eekfonky/n8n-mcp-server:latest"
     ref: ""
 
-    # All 15 primitive tools provided by the server
+    # 5 core tools in v2.0 (v1.x had 15 tools - see src-backup for legacy tools)
     tools:
       - name: "n8n_discover"
+        description: "Discover workflows, nodes, executions, and credentials"
       - name: "n8n_create"
+        description: "Create workflows or add nodes to existing workflows"
       - name: "n8n_execute"
+        description: "Execute workflows with optional input data and wait for completion"
       - name: "n8n_inspect"
+        description: "Get detailed workflow, execution, or node information"
       - name: "n8n_remove"
-      - name: "n8n_modify"
-      - name: "n8n_connect"
-      - name: "n8n_control"
-      - name: "n8n_search"
-      - name: "n8n_validate"
-      - name: "n8n_monitor"
-      - name: "n8n_debug"
-      - name: "n8n_template"
-      - name: "n8n_batch"
-      - name: "n8n_export"
+        description: "Delete workflows or remove nodes from workflows"
 
     # Required secrets for n8n API connection
     secrets:
@@ -45,7 +40,7 @@ registry:
       - name: "MCP_SERVER_NAME"
         value: "n8n-mcp-server"
       - name: "MCP_SERVER_VERSION"
-        value: "1.0.0"
+        value: "2.0.0"
       - name: "LOG_LEVEL"
         value: "{{n8n-server.log_level}}"
       - name: "RATE_LIMIT_REQUESTS_PER_MINUTE"

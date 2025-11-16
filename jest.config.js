@@ -20,7 +20,6 @@ export default {
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
-  setupFilesAfterEnv: ['<rootDir>/src/testing/setup.ts'],
   transform: {
     '^.+\\.ts$': ['ts-jest', {
       useESM: true,
