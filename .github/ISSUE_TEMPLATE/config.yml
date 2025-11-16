@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or Discussion
+    url: https://github.com/eekfonky/n8n-mcp-server/discussions
+    about: Ask questions or start discussions about the project
+  - name: Documentation
+    url: https://github.com/eekfonky/n8n-mcp-server#readme
+    about: Read the project documentation
+  - name: n8n Community
+    url: https://community.n8n.io/
+    about: Get help from the n8n community

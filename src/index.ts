@@ -39,6 +39,7 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import dotenv from 'dotenv';
 import { N8nClient } from './client.js';
+import { loggers, logToolExecution, logPerformance } from './logger.js';
 
 // Load environment variables
 dotenv.config();
@@ -105,8 +106,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const toolName = request.params.name;
   const loader = toolHandlers[toolName];
+  const startTime = Date.now();
 
   if (!loader) {
+    loggers.tool.warn({ toolName }, `Unknown tool: ${toolName}`);
     return {
       content: [{
         type: 'text',
@@ -118,20 +121,27 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
   try {
     const module = await loader();
+    let result;
 
     // Call the appropriate handler
     switch (toolName) {
       case 'n8n_discover':
-        return await module.handleDiscover(request, client);
+        result = await module.handleDiscover(request, client);
+        break;
       case 'n8n_create':
-        return await module.handleCreate(request, client);
+        result = await module.handleCreate(request, client);
+        break;
       case 'n8n_execute':
-        return await module.handleExecute(request, client);
+        result = await module.handleExecute(request, client);
+        break;
       case 'n8n_inspect':
-        return await module.handleInspect(request, client);
+        result = await module.handleInspect(request, client);
+        break;
       case 'n8n_remove':
-        return await module.handleRemove(request, client);
+        result = await module.handleRemove(request, client);
+        break;
       default:
+        loggers.tool.warn({ toolName }, `No handler for tool: ${toolName}`);
         return {
           content: [{
             type: 'text',
@@ -140,7 +150,15 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           isError: true,
         };
     }
+
+    const duration = Date.now() - startTime;
+    logToolExecution(toolName, request.params.arguments || {}, duration, true);
+    return result;
   } catch (error: any) {
+    const duration = Date.now() - startTime;
+    logToolExecution(toolName, request.params.arguments || {}, duration, false);
+    loggers.tool.error({ error, toolName }, `Tool execution failed: ${error?.message}`);
+
     return {
       content: [{
         type: 'text',
@@ -153,7 +171,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
 // Error handler
 server.onerror = (error) => {
-  console.error('[MCP Error]', error);
+  loggers.server.error({ error }, 'MCP Server Error');
 };
 
 // Start server
@@ -162,17 +180,15 @@ async function main() {
 
   // Connection cleanup handler (MCP best practice)
   transport.onclose = async () => {
-    if (process.env.DEBUG === 'true') {
-      console.error('Connection closed, cleaning up...');
-    }
+    loggers.server.info('Connection closed, cleaning up...');
   };
 
   await server.connect(transport);
 
-  if (process.env.DEBUG === 'true') {
-    console.error('n8n MCP Server v2.0.0 running on stdio');
-    console.error('Connected to n8n:', N8N_BASE_URL);
-  }
+  loggers.server.info(
+    { version: '2.0.0', n8nUrl: N8N_BASE_URL },
+    'n8n MCP Server started successfully'
+  );
 }
 
 // Graceful shutdown handler
@@ -181,15 +197,14 @@ async function shutdown(signal: string) {
   if (isShuttingDown) return;
   isShuttingDown = true;
 
-  if (process.env.DEBUG === 'true') {
-    console.error(`\nReceived ${signal}, shutting down gracefully...`);
-  }
+  loggers.server.info({ signal }, 'Received shutdown signal, shutting down gracefully...');
 
   try {
     // Give time for any in-flight requests to complete
     await new Promise(resolve => setTimeout(resolve, 100));
+    loggers.server.info('Shutdown complete');
   } catch (error) {
-    console.error('Error during shutdown:', error);
+    loggers.server.error({ error }, 'Error during shutdown');
   }
 
   process.exit(0);

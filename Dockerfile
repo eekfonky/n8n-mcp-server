@@ -29,8 +29,9 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --only=production && npm cache clean --force
 
-# Copy built application
+# Copy built application and scripts
 COPY --from=builder /app/dist ./dist
+COPY scripts/healthcheck.js ./scripts/healthcheck.js
 
 # Change ownership to non-root user
 RUN chown -R mcp:nodejs /app
@@ -38,6 +39,10 @@ USER mcp
 
 # Environment variables
 ENV NODE_ENV=production
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD node scripts/healthcheck.js || exit 1
 
 # Start the MCP server
 CMD ["node", "dist/index.js"]

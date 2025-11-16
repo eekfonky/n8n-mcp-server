@@ -10,7 +10,7 @@ export interface N8nWorkflow {
   nodes: N8nNode[];
   connections: Record<string, any>;
   settings?: Record<string, any>;
-  tags?: string[];
+  tags?: Array<{ id: string; name: string }>;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -19,7 +19,7 @@ export interface N8nNode {
   id: string;
   name: string;
   type: string;
-  typeVersion?: number;
+  typeVersion: number;
   position: [number, number];
   parameters: Record<string, any>;
   credentials?: Record<string, any>;
